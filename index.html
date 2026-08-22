@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>📺 العُبودي TV</title> 
+<title>📺 العُبودي TV - Yacine Live</title> 
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -77,25 +77,6 @@ body::before {
   font-size: 0.9rem;
 }
 
-.telegram-link {
-  margin-top: 10px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(0, 136, 204, 0.2);
-  padding: 8px 16px;
-  border-radius: 12px;
-  color: white;
-  text-decoration: none;
-  font-weight: 600;
-  transition: all 0.3s ease;
-}
-
-.telegram-link:hover {
-  background: rgba(0, 136, 204, 0.3);
-  transform: translateY(-2px);
-}
-
 .player-section {
   margin-bottom: 20px;
   padding: 15px;
@@ -118,41 +99,13 @@ body::before {
   background: #000;
 }
 
-.search-section {
-  margin-bottom: 15px;
-  padding: 15px;
-}
-
-.search-box {
-  width: 100%;
-  padding: 12px 18px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  font-family: 'Cairo', sans-serif;
-  font-size: 14px;
-  color: white;
-  outline: none;
-  transition: all 0.3s ease;
-}
-
-.search-box::placeholder {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.search-box.focused {
-  background: rgba(255, 255, 255, 0.15);
-  border: 2px solid rgba(67, 97, 238, 0.6);
-  box-shadow: 0 0 15px rgba(67, 97, 238, 0.3);
-}
-
 .channels-section {
   padding: 15px;
 }
 
 .channels-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 12px;
 }
 
@@ -161,7 +114,7 @@ body::before {
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
-  padding: 24px 15px;
+  padding: 20px 15px;
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
@@ -187,27 +140,14 @@ body::before {
 .channel-name {
   font-weight: 700;
   color: white;
-  font-size: 1.05rem;
-  margin-top: 5px;
+  font-size: 1rem;
 }
 
-.quality-badge {
+.badge {
   position: absolute;
   top: 8px;
   left: 8px;
   background: rgba(67, 97, 238, 0.8);
-  color: white;
-  padding: 2px 6px;
-  border-radius: 6px;
-  font-size: 0.65rem;
-  font-weight: 600;
-}
-
-.live-badge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: rgba(247, 37, 133, 0.8);
   color: white;
   padding: 2px 6px;
   border-radius: 6px;
@@ -230,23 +170,25 @@ body::before {
   background: rgba(247, 37, 133, 0.4);
 }
 
-.no-results {
+.loading {
   text-align: center;
   padding: 30px;
-  color: rgba(255, 255, 255, 0.6);
+  color: white;
   grid-column: 1 / -1;
 }
 
-@media (max-width: 768px) {
-  .channels-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid white;
+  border-radius: 50%;
+  margin: 0 auto 10px;
+  animation: spin 1s linear infinite;
 }
 
-@media (max-width: 480px) {
-  .channels-grid {
-    grid-template-columns: 1fr;
-  }
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 </style>
 </head> 
@@ -255,10 +197,7 @@ body::before {
 
 <header class="header glass-panel">
   <h1>العُبودي TV</h1>
-  <div class="subtitle">بث مباشر - قنوات ألوان (HLS)</div>
-  <a href="https://t.me/stlaet1" class="telegram-link" target="_blank">
-    <span>تابعونا على التلكرام</span>
-  </a>
+  <div class="subtitle">فك تشفير وبث Yacine TV المباشر عبر OvenPlayer</div>
 </header> 
 
 <section id="player-container" class="player-section glass-panel">
@@ -269,62 +208,99 @@ body::before {
   <div id="player-wrapper"></div>
 </section>
 
-<section class="search-section glass-panel">
-  <input type="text" id="search-input" class="search-box" placeholder="ابحث عن قناة...">
-</section>
-
 <section class="channels-section glass-panel">
-  <div class="channels-grid" id="channels"></div>
+  <div id="channels" class="channels-grid">
+    <div class="loading">
+      <div class="spinner"></div>
+      جاري فك تشفير وجلب القنوات...
+    </div>
+  </div>
 </section>
 
 <script>
-const channelsData = [
-  {
-    name: "الوان 1",
-    url: "http://mh.smpy24.live:80/live/Bengamenbukinafaso2026/msvrpi45e1/1641605.m3u8",
-    quality: "HD",
-    status: "مباشر"
-  },
-  {
-    name: "الوان 2",
-    url: "http://mh.smpy24.live:80/live/Bengamenbukinafaso2026/msvrpi45e1/1641606.m3u8",
-    quality: "HD",
-    status: "مباشر"
-  },
-  {
-    name: "الوان 3",
-    url: "http://mh.smpy24.live:80/live/Bengamenbukinafaso2026/msvrpi45e1/1641607.m3u8",
-    quality: "HD",
-    status: "مباشر"
-  }
-];
-
 let playerInstance = null;
-const searchInput = document.getElementById('search-input');
 
-function initPlayer(streamUrl, channelName) {
+// دالة فك التشفير بلغة JavaScript (XOR Decryption)
+function decryptYacinePayload(base64Body, tHeader) {
+  const binaryStr = atob(base64Body);
+  const decodedBytes = new Uint8Array(binaryStr.length);
+  for (let i = 0; i < binaryStr.length; i++) {
+    decodedBytes[i] = binaryStr.charCodeAt(i);
+  }
+
+  const keyStr = "c!xZj+N9&G@Ev@vw" + (tHeader || Math.floor(Date.now() / 1000).toString());
+  const keyEncoder = new TextEncoder();
+  const keyBytes = keyEncoder.encode(keyStr);
+
+  const plainBytes = new Uint8Array(decodedBytes.length);
+  for (let i = 0; i < decodedBytes.length; i++) {
+    plainBytes[i] = decodedBytes[i] ^ keyBytes[i % keyBytes.length];
+  }
+
+  const textDecoder = new TextDecoder('utf-8');
+  let plainStr = textDecoder.decode(plainBytes);
+  plainStr = plainStr.replace(/\\\//g, '/');
+  return JSON.parse(plainStr);
+}
+
+// دالة جلب البيانات مع تخطي قيود الـ CORS
+async function fetchYacineApi(apiUrl) {
+  // استخدام وكيل لفك القيود وإرسال الـ Headers المطلوبة
+  const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;
+  
+  const response = await fetch(proxyUrl);
+  const data = await response.json();
+  
+  const tHeader = Math.floor(Date.now() / 1000).toString();
+  return decryptYacinePayload(data.contents.trim(), tHeader);
+}
+
+// تشغيل القناة في OvenPlayer
+async function playChannel(channelId, channelName) {
   const container = document.getElementById('player-container');
   const title = document.getElementById('current-channel-title');
   
   container.style.display = 'block';
-  title.textContent = `جاري التشغيل: ${channelName}`;
+  title.textContent = `جاري استخراج السيرفر: ${channelName}...`;
   container.scrollIntoView({ behavior: 'smooth' });
 
-  if (playerInstance) {
-    playerInstance.remove();
-  }
+  try {
+    const streamInfo = await fetchYacineApi(`https://def.yacinelive.com/api/channel/${channelId}`);
+    
+    // استخراج رابط البث من مصفوفة السيرفرات المفكوكة
+    let streamUrl = "";
+    if (Array.isArray(streamInfo) && streamInfo.length > 0) {
+      streamUrl = streamInfo[0].url || streamInfo[0].stream_url;
+    } else if (streamInfo.url) {
+      streamUrl = streamInfo.url;
+    }
 
-  playerInstance = OvenPlayer.create('player-wrapper', {
-    autoStart: true,
-    controls: true,
-    sources: [
-      {
-        type: 'hls',
-        file: streamUrl,
-        label: channelName
-      }
-    ]
-  });
+    if (!streamUrl) {
+      alert("تعذر العثور على رابط بث نشط للقناة حالياً.");
+      return;
+    }
+
+    title.textContent = `جاري التشغيل: ${channelName}`;
+
+    if (playerInstance) {
+      playerInstance.remove();
+    }
+
+    playerInstance = OvenPlayer.create('player-wrapper', {
+      autoStart: true,
+      controls: true,
+      sources: [
+        {
+          type: 'hls',
+          file: streamUrl,
+          label: channelName
+        }
+      ]
+    });
+  } catch (error) {
+    title.textContent = `خطأ أثناء تشغيل: ${channelName}`;
+    console.error(error);
+  }
 }
 
 function closePlayer() {
@@ -336,45 +312,39 @@ function closePlayer() {
   document.querySelectorAll('.channel-card').forEach(c => c.classList.remove('active-stream'));
 }
 
-function displayChannels(channels) {
-  const grid = document.getElementById("channels");
-  grid.innerHTML = "";
+// تحميل القنوات المتاحة
+async function loadChannels() {
+  const grid = document.getElementById('channels');
+  try {
+    // جلب القنوات لقناة beIN SPORTS 1 الافتراضية
+    const defaultChannels = [
+      { id: 1424, name: "beIN SPORTS 1" }
+    ];
 
-  if (channels.length === 0) {
-    grid.innerHTML = '<div class="no-results">لم يتم العثور على قنوات</div>';
-    return;
+    grid.innerHTML = "";
+    defaultChannels.forEach(ch => {
+      const card = document.createElement("div");
+      card.className = "channel-card";
+      card.innerHTML = `
+        <span class="badge">Live API</span>
+        <div class="channel-name">${ch.name}</div>
+      `;
+      
+      card.onclick = () => {
+        document.querySelectorAll('.channel-card').forEach(c => c.classList.remove('active-stream'));
+        card.classList.add('active-stream');
+        playChannel(ch.id, ch.name);
+      };
+
+      grid.appendChild(card);
+    });
+
+  } catch (e) {
+    grid.innerHTML = `<div class="loading">❌ فشل تحميل القنوات: ${e.message}</div>`;
   }
-
-  channels.forEach(channel => {
-    const card = document.createElement("div");
-    card.className = "channel-card";
-    card.innerHTML = `
-      <span class="quality-badge">${channel.quality}</span>
-      <span class="live-badge">${channel.status}</span>
-      <div class="channel-name">${channel.name}</div>
-    `;
-    
-    card.onclick = () => {
-      document.querySelectorAll('.channel-card').forEach(c => c.classList.remove('active-stream'));
-      card.classList.add('active-stream');
-      initPlayer(channel.url, channel.name);
-    };
-
-    grid.appendChild(card);
-  });
 }
 
-function init() {
-  displayChannels(channelsData);
-  
-  searchInput.addEventListener('input', function(e) {
-    const searchTerm = e.target.value.toLowerCase();
-    const filtered = channelsData.filter(ch => ch.name.toLowerCase().includes(searchTerm));
-    displayChannels(filtered);
-  });
-}
-
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', loadChannels);
 </script>
 </body>
 </html>
