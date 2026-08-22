@@ -205,7 +205,7 @@ body {
     <h3 id="current-channel-title">اسم القناة</h3>
     <button class="close-btn" onclick="closePlayer()">✕ إغلاق</button>
   </div>
-  <video id="video-element" controls playsinline></video>
+  <video id="video-element" controls playsinline autoplay></video>
 </section>
 
 <div class="categories-bar" id="categories-bar"></div>
@@ -301,30 +301,44 @@ async function loadChannelsByCategory(catId) {
   });
 }
 
+function extractRealLiveUrl(streamData) {
+  let urls = [];
+  const collect = (obj) => {
+    if (!obj) return;
+    if (typeof obj === "string" && (obj.startsWith("http://") || obj.startsWith("https://"))) {
+      urls.push(obj);
+    } else if (Array.isArray(obj)) {
+      obj.forEach(collect);
+    } else if (typeof obj === "object") {
+      Object.values(obj).forEach(collect);
+    }
+  };
+  collect(streamData);
+
+  // استخراج رابط M3U8 المباشر أولاً واستبعاد الإعلانات
+  const m3u8Url = urls.find(u => u.includes(".m3u8") || u.includes("live") || u.includes("stream"));
+  if (m3u8Url) return m3u8Url;
+
+  const validUrl = urls.find(u => !u.endsWith(".mp4") && !u.includes("ad_"));
+  if (validUrl) return validUrl;
+
+  return urls[0] || "";
+}
+
 async function playChannel(channelId, channelName) {
   const container = document.getElementById("player-container");
   const title = document.getElementById("current-channel-title");
   const video = document.getElementById("video-element");
 
   container.style.display = "block";
-  title.textContent = `جاري بدء البث: ${channelName}...`;
+  title.textContent = `جاري استخراج البث الحي: ${channelName}...`;
   container.scrollIntoView({ behavior: "smooth" });
 
   try {
     const streamData = await fetchFromBackend(`/api/channel/${channelId}`);
-    let rawStreamUrl = "";
-    
-    if (Array.isArray(streamData) && streamData.length > 0) {
-      rawStreamUrl = streamData[0].url || streamData[0].stream_url;
-    } else if (streamData.data && Array.isArray(streamData.data) && streamData.data.length > 0) {
-      rawStreamUrl = streamData.data[0].url || streamData.data[0].stream_url;
-    } else if (streamData.url) {
-      rawStreamUrl = streamData.url;
-    } else if (streamData.stream_url) {
-      rawStreamUrl = streamData.stream_url;
-    }
+    const rawStreamUrl = extractRealLiveUrl(streamData);
 
-    if (!rawStreamUrl) throw new Error("رابط البث غير متوفر");
+    if (!rawStreamUrl) throw new Error("رابط البث غير متوفر حالياً");
 
     const proxiedStreamUrl = `${BACKEND_ENDPOINT}?stream=${encodeURIComponent(rawStreamUrl)}`;
 
@@ -338,17 +352,20 @@ async function playChannel(channelId, channelName) {
     if (Hls.isSupported()) {
       hlsInstance = new Hls({
         liveSyncDurationCount: 3,
-        liveMaxLatencyDurationCount: 6,
         maxBufferLength: 10,
-        enableWorker: true
+        enableWorker: true,
+        manifestLoadingMaxRetry: 5,
+        levelLoadingMaxRetry: 5
       });
 
       hlsInstance.loadSource(proxiedStreamUrl);
       hlsInstance.attachMedia(video);
 
       hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
-        video.currentTime = video.duration || 0;
-        video.play().catch(() => {});
+        video.play().catch(() => {
+          video.muted = true;
+          video.play();
+        });
       });
 
       hlsInstance.on(Hls.Events.ERROR, (event, data) => {
@@ -364,7 +381,10 @@ async function playChannel(channelId, channelName) {
       });
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = proxiedStreamUrl;
-      video.play().catch(() => {});
+      video.play().catch(() => {
+        video.muted = true;
+        video.play();
+      });
     }
   } catch (err) {
     title.textContent = `خطأ في تشغيل ${channelName}`;
