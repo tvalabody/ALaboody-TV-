@@ -238,9 +238,7 @@ const BACKEND_ENDPOINT = "https://yacine-proxy.hsinnzaer5.workers.dev";
 let artInstance = null;
 let currentHls = null;
 
-// دالة تنظيف صارمة تقطع الصوت وتدمر المشغل بالكامل
 function forceStopAndClean() {
-  // 1. تدمير Hls
   if (currentHls) {
     try {
       currentHls.stopLoad();
@@ -250,7 +248,6 @@ function forceStopAndClean() {
     currentHls = null;
   }
 
-  // 2. إيقاف وتفريغ جميع عناصر الفيديو في الصفحة
   const videos = document.querySelectorAll('video');
   videos.forEach(v => {
     try {
@@ -263,7 +260,6 @@ function forceStopAndClean() {
     } catch (e) {}
   });
 
-  // 3. تدمير مثيل ArtPlayer
   if (artInstance) {
     try {
       artInstance.destroy(true);
@@ -271,7 +267,6 @@ function forceStopAndClean() {
     artInstance = null;
   }
 
-  // 4. إعادة بناء عنصر DOM الخاص بالمشغل للتخلص من أي listeners معلقة
   const wrapper = document.getElementById('player-wrapper');
   if (wrapper) {
     wrapper.innerHTML = '<div id="artplayer-mount"></div>';
@@ -363,7 +358,6 @@ async function loadChannelStreams(channelId, channelName) {
   const title = document.getElementById("current-channel-title");
   const serversDiv = document.getElementById("servers-list");
 
-  // إيقاف أي بث سابق فوراً عند الضغط على قناة جديدة
   forceStopAndClean();
 
   container.style.display = "block";
@@ -411,7 +405,6 @@ async function loadChannelStreams(channelId, channelName) {
 }
 
 function startArtPlayer(rawUrl) {
-  // تنظيف شامل قبل بدء المشغل الجديد
   forceStopAndClean();
 
   const proxiedStreamUrl = `${BACKEND_ENDPOINT}?stream=${encodeURIComponent(rawUrl)}`;
@@ -432,12 +425,44 @@ function startArtPlayer(rawUrl) {
           const hls = new Hls({
             enableWorker: true,
             lowLatencyMode: false,
-            maxBufferLength: 15,
-            maxMaxBufferLength: 30,
+            maxBufferLength: 8,
+            maxMaxBufferLength: 15,
+            liveSyncDurationCount: 3,
+            liveMaxLatencyDurationCount: 6,
+            maxBufferHole: 0.1,
+            highBufferWatchdogPeriod: 2,
+            nudgeOffset: 0.1,
+            nudgeMaxRetry: 5,
+            enableSoftwareAES: true,
+            manifestLoadingTimeOut: 10000,
+            manifestLoadingMaxRetry: 3,
+            levelLoadingTimeOut: 10000,
+            fragLoadingTimeOut: 20000,
           });
 
           hls.loadSource(url);
           hls.attachMedia(video);
+
+          hls.on(Hls.Events.ERROR, function (event, data) {
+            if (data.fatal) {
+              switch (data.type) {
+                case Hls.ErrorTypes.MEDIA_ERROR:
+                  hls.recoverMediaError();
+                  break;
+                case Hls.ErrorTypes.NETWORK_ERROR:
+                  hls.startLoad();
+                  break;
+                default:
+                  forceStopAndClean();
+                  break;
+              }
+            } else if (data.details === Hls.ErrorDetails.BUFFER_STALLED_ERROR) {
+              if (video.buffered.length > 0) {
+                video.currentTime = video.buffered.end(video.buffered.length - 1) - 0.5;
+              }
+            }
+          });
+
           currentHls = hls;
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
           video.src = url;
