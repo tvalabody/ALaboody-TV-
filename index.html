@@ -308,7 +308,6 @@ async function loadChannelsByCategory(catId) {
   const channelsGrid = document.getElementById("channels");
   channelsGrid.innerHTML = `<div class="status-msg"><div class="spinner"></div>جاري تحميل القنوات...</div>`;
 
-  // قائمة بجميع مسارات قنوات الأقسام المحتملة في سيرفرات ياسين
   const endpoints = [
     `/api/categories/${catId}/channels`,
     `/api/category/${catId}/channels`,
@@ -317,8 +316,6 @@ async function loadChannelsByCategory(catId) {
   ];
 
   let channels = [];
-  let errorLog = "";
-
   for (const ep of endpoints) {
     try {
       const res = await fetchFromBackend(ep);
@@ -327,15 +324,13 @@ async function loadChannelsByCategory(catId) {
         channels = extracted;
         break;
       }
-    } catch (e) {
-      errorLog = e.message;
-    }
+    } catch (e) {}
   }
 
   channelsGrid.innerHTML = "";
 
   if (!channels || channels.length === 0) {
-    channelsGrid.innerHTML = `<div class="status-msg">لا توجد قنوات متاحة في هذا القسم أو تعذر قراءتها.</div>`;
+    channelsGrid.innerHTML = `<div class="status-msg">لا توجد قنوات متاحة في هذا القسم.</div>`;
     return;
   }
 
@@ -362,19 +357,22 @@ async function playChannel(channelId, channelName) {
 
   try {
     const streamData = await fetchFromBackend(`/api/channel/${channelId}`);
-    let streamUrl = "";
+    let rawStreamUrl = "";
     
     if (Array.isArray(streamData) && streamData.length > 0) {
-      streamUrl = streamData[0].url || streamData[0].stream_url;
+      rawStreamUrl = streamData[0].url || streamData[0].stream_url;
     } else if (streamData.data && Array.isArray(streamData.data) && streamData.data.length > 0) {
-      streamUrl = streamData.data[0].url || streamData.data[0].stream_url;
+      rawStreamUrl = streamData.data[0].url || streamData.data[0].stream_url;
     } else if (streamData.url) {
-      streamUrl = streamData.url;
+      rawStreamUrl = streamData.url;
     } else if (streamData.stream_url) {
-      streamUrl = streamData.stream_url;
+      rawStreamUrl = streamData.stream_url;
     }
 
-    if (!streamUrl) throw new Error("رابط البث غير متوفر حالياً");
+    if (!rawStreamUrl) throw new Error("رابط البث غير متوفر حالياً");
+
+    // تشغيل الرابط عبر سيرفر البروكسي لتخطي حظر الفيديو والترويسات
+    const proxiedStreamUrl = `${BACKEND_ENDPOINT}?stream=${encodeURIComponent(rawStreamUrl)}`;
 
     title.textContent = `جاري التشغيل: ${channelName}`;
 
@@ -383,7 +381,7 @@ async function playChannel(channelId, channelName) {
     playerInstance = OvenPlayer.create("player-wrapper", {
       autoStart: true,
       controls: true,
-      sources: [{ type: "hls", file: streamUrl, label: channelName }]
+      sources: [{ type: "hls", file: proxiedStreamUrl, label: channelName }]
     });
   } catch (err) {
     title.textContent = `خطأ: تعذر تشغيل ${channelName}`;
