@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>📺 العُبودي TV - Yacine Live</title> 
+<title>📺 العُبودي TV</title> 
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet"> 
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet"> 
 
 <!-- مكتبات OvenPlayer و HLS.js -->
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
@@ -19,6 +19,7 @@
   --accent: #f72585;
   --glass-bg: rgba(255, 255, 255, 0.1);
   --glass-border: rgba(255, 255, 255, 0.15);
+  --blur: blur(15px);
 }
 
 * {
@@ -32,12 +33,25 @@ body {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 15px;
   min-height: 100vh;
-  color: white;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%);
+  z-index: -1;
 }
 
 .glass-panel {
   background: var(--glass-bg);
-  backdrop-filter: blur(15px);
+  backdrop-filter: var(--blur);
   border: 1px solid var(--glass-border);
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
@@ -50,8 +64,36 @@ body {
 }
 
 .header h1 {
-  font-size: 1.8rem;
+  font-size: 2rem;
+  background: linear-gradient(135deg, #fff 0%, #e2e8ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
   margin-bottom: 5px;
+}
+
+.subtitle {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+}
+
+.telegram-link {
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 136, 204, 0.2);
+  padding: 8px 16px;
+  border-radius: 12px;
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.telegram-link:hover {
+  background: rgba(0, 136, 204, 0.3);
+  transform: translateY(-2px);
 }
 
 .player-section {
@@ -65,6 +107,7 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
+  color: white;
 }
 
 #player-wrapper {
@@ -77,54 +120,63 @@ body {
 
 .categories-bar {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   overflow-x: auto;
   padding: 10px 5px;
   margin-bottom: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .cat-btn {
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.9);
   padding: 8px 16px;
-  border-radius: 10px;
+  border-radius: 12px;
   cursor: pointer;
-  white-space: nowrap;
   font-family: 'Cairo', sans-serif;
   font-weight: 600;
-  transition: 0.3s;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
 }
 
 .cat-btn.active {
   background: var(--accent);
   border-color: var(--accent);
+  box-shadow: 0 0 10px rgba(247, 37, 133, 0.4);
+}
+
+.channels-section {
+  padding: 15px;
 }
 
 .channels-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 12px;
-  padding: 15px;
 }
 
 .channel-card {
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
-  padding: 18px 10px;
+  padding: 20px 10px;
   cursor: pointer;
-  transition: 0.3s ease;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  min-height: 80px;
+  color: white;
   font-weight: 700;
+  min-height: 80px;
 }
 
 .channel-card:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
   transform: translateY(-2px);
 }
 
@@ -135,19 +187,38 @@ body {
 
 .close-btn {
   background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   color: white;
   padding: 6px 12px;
   border-radius: 8px;
   cursor: pointer;
   font-family: 'Cairo', sans-serif;
+  transition: 0.3s;
+}
+
+.close-btn:hover {
+  background: rgba(247, 37, 133, 0.4);
 }
 
 .status-msg {
   text-align: center;
   padding: 30px;
+  color: white;
   grid-column: 1 / -1;
-  font-size: 1rem;
+}
+
+.spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid white;
+  border-radius: 50%;
+  margin: 0 auto 10px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 </style>
 </head> 
@@ -155,8 +226,14 @@ body {
 <body> 
 
 <header class="header glass-panel">
-  <h1>📺 العُبودي TV</h1>
-  <div>بث مباشر لجميع باقات ياسين تيفي</div>
+  <h1>العُبودي TV</h1>
+  <div class="subtitle">بث مباشر لجميع باقات ياسين تيفي</div>
+  <a href="https://t.me/stlaet1" class="telegram-link" target="_blank">
+    <span>تابعونا على التلكرام</span>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.14.141-.259.259-.374.261l.213-3.053 5.56-5.022c.24-.213-.054-.334-.373-.121l-6.869 4.326-2.96-.924c-.64-.203-.658-.64.136-.954l11.566-4.458c.538-.196 1.006.128.832.941z"/>
+    </svg>
+  </a>
 </header> 
 
 <section id="player-container" class="player-section glass-panel">
@@ -169,9 +246,12 @@ body {
 
 <div class="categories-bar" id="categories-bar"></div>
 
-<section class="glass-panel">
+<section class="channels-section glass-panel">
   <div class="channels-grid" id="channels">
-    <div class="status-msg">جاري تحميل الأقسام والقنوات...</div>
+    <div class="status-msg">
+      <div class="spinner"></div>
+      جاري تحميل الأقسام والقنوات...
+    </div>
   </div>
 </section>
 
@@ -182,7 +262,7 @@ let playerInstance = null;
 
 async function fetchFromBackend(path) {
   const res = await fetch(`${BACKEND_ENDPOINT}${path}`);
-  if (!res.ok) throw new Error(`خطأ في الاستجابة: ${res.status}`);
+  if (!res.ok) throw new Error(`كود الاستجابة: ${res.status}`);
   return await res.json();
 }
 
@@ -210,13 +290,17 @@ async function loadCategories() {
       loadChannelsByCategory(categories[0].id);
     }
   } catch (err) {
-    channelsGrid.innerHTML = `<div class="status-msg">⚠️ تعذر تحميل الأقسام: ${err.message}</div>`;
+    channelsGrid.innerHTML = `
+      <div class="status-msg">
+        ⚠️ تعذر جلب الأقسام: تأكد من تفعيل السيرفر على Val Town.<br>
+        <small style="opacity:0.7">${err.message}</small>
+      </div>`;
   }
 }
 
 async function loadChannelsByCategory(catId) {
   const channelsGrid = document.getElementById("channels");
-  channelsGrid.innerHTML = `<div class="status-msg">جاري تحميل القنوات...</div>`;
+  channelsGrid.innerHTML = `<div class="status-msg"><div class="spinner"></div>جاري تحميل القنوات...</div>`;
 
   try {
     const channels = await fetchFromBackend(`/api/channels?category_id=${catId}`);
@@ -239,7 +323,7 @@ async function loadChannelsByCategory(catId) {
       channelsGrid.appendChild(card);
     });
   } catch (err) {
-    channelsGrid.innerHTML = `<div class="status-msg">⚠️ فشل تحميل قنوات هذا القسم</div>`;
+    channelsGrid.innerHTML = `<div class="status-msg">⚠️ تعذر تحميل قنوات هذا القسم</div>`;
   }
 }
 
@@ -248,7 +332,7 @@ async function playChannel(channelId, channelName) {
   const title = document.getElementById("current-channel-title");
 
   container.style.display = "block";
-  title.textContent = `جاري استخراج وتشغيل: ${channelName}...`;
+  title.textContent = `جاري تجهيز: ${channelName}...`;
   container.scrollIntoView({ behavior: "smooth" });
 
   try {
@@ -273,7 +357,7 @@ async function playChannel(channelId, channelName) {
       sources: [{ type: "hls", file: streamUrl, label: channelName }]
     });
   } catch (err) {
-    title.textContent = `خطأ: تعذر تشغيل ${channelName}`;
+    title.textContent = `خطأ أثناء تشغيل ${channelName}`;
   }
 }
 
