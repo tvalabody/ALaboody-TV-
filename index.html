@@ -9,7 +9,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet"> 
 
+<!-- مكتبة Hls.js ومشغل ArtPlayer -->
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js"></script>
 
 <style>
 :root {
@@ -88,12 +90,12 @@ body {
   margin-bottom: 8px;
 }
 
-#video-element {
+#artplayer-container {
   width: 100%;
   aspect-ratio: 16 / 9;
   border-radius: 12px;
+  overflow: hidden;
   background: #000;
-  display: block;
 }
 
 .servers-container {
@@ -112,6 +114,7 @@ body {
   cursor: pointer;
   font-family: 'Cairo', sans-serif;
   font-size: 0.8rem;
+  font-weight: 600;
 }
 
 .server-btn.active {
@@ -216,7 +219,7 @@ body {
     <h3 id="current-channel-title">اسم القناة</h3>
     <button class="close-btn" onclick="closePlayer()">✕ إغلاق</button>
   </div>
-  <video id="video-element" controls playsinline autoplay></video>
+  <div id="artplayer-container"></div>
   <div class="servers-container" id="servers-list"></div>
 </section>
 
@@ -231,7 +234,7 @@ body {
 <script>
 const BACKEND_ENDPOINT = "https://tvalabody--fcb765689de211f1ac711607ee4eb77e.web.val.run";
 
-let hlsInstance = null;
+let artInstance = null;
 
 async function fetchFromBackend(path) {
   const res = await fetch(`${BACKEND_ENDPOINT}${path}`);
@@ -349,57 +352,65 @@ async function loadChannelStreams(channelId, channelName) {
       btn.onclick = () => {
         document.querySelectorAll(".server-btn").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
-        startStream(targetUrl);
+        startArtPlayer(targetUrl);
       };
       serversDiv.appendChild(btn);
     });
 
     const firstUrl = streamList[0].url || streamList[0].stream_url;
-    if (firstUrl) startStream(firstUrl);
+    if (firstUrl) startArtPlayer(firstUrl);
 
   } catch (err) {
     title.textContent = `خطأ: ${err.message}`;
   }
 }
 
-function startStream(rawUrl) {
-  const video = document.getElementById("video-element");
+function startArtPlayer(rawUrl) {
   const proxiedStreamUrl = `${BACKEND_ENDPOINT}?stream=${encodeURIComponent(rawUrl)}`;
 
-  if (hlsInstance) {
-    hlsInstance.destroy();
-    hlsInstance = null;
+  if (artInstance) {
+    artInstance.destroy(true);
+    artInstance = null;
   }
 
-  if (Hls.isSupported()) {
-    hlsInstance = new Hls({
-      enableWorker: true,
-      lowLatencyMode: true
-    });
-    hlsInstance.loadSource(proxiedStreamUrl);
-    hlsInstance.attachMedia(video);
-    hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
-      video.play().catch(() => {
-        video.muted = true;
-        video.play();
-      });
-    });
-  } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-    video.src = proxiedStreamUrl;
-    video.play().catch(() => {
-      video.muted = true;
-      video.play();
-    });
-  }
+  artInstance = new Artplayer({
+    container: '#artplayer-container',
+    url: proxiedStreamUrl,
+    type: 'm3u8',
+    isLive: true,
+    autoplay: true,
+    autoMini: true,
+    fullscreen: true,
+    fullscreenWeb: true,
+    playsInline: true,
+    customType: {
+      m3u8: function (video, url) {
+        if (Hls.isSupported()) {
+          if (artInstance && artInstance.hls) {
+            artInstance.hls.destroy();
+          }
+          const hls = new Hls({
+            enableWorker: true,
+            lowLatencyMode: true
+          });
+          hls.loadSource(url);
+          hls.attachMedia(video);
+          artInstance.hls = hls;
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+          video.src = url;
+        }
+      },
+    },
+  });
 }
 
 function closePlayer() {
-  const video = document.getElementById("video-element");
-  video.pause();
-  video.src = "";
-  if (hlsInstance) {
-    hlsInstance.destroy();
-    hlsInstance = null;
+  if (artInstance) {
+    if (artInstance.hls) {
+      artInstance.hls.destroy();
+    }
+    artInstance.destroy(true);
+    artInstance = null;
   }
   document.getElementById("player-container").style.display = "none";
   document.querySelectorAll(".channel-card").forEach(c => c.classList.remove("active-stream"));
