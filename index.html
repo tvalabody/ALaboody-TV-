@@ -9,7 +9,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet"> 
 
-<!-- مكتبة Hls.js ومشغل ArtPlayer -->
+<!-- مكتبات P2P و ArtPlayer -->
+<script src="https://cdn.jsdelivr.net/npm/cdnbye-core@latest"></script>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <script src="https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js"></script>
 
@@ -208,7 +209,7 @@ body {
 
 <header class="header glass-panel">
   <h1>العُبودي TV</h1>
-  <div class="subtitle">بث مباشر لجميع باقات ياسين تيفي</div>
+  <div class="subtitle">بث مباشر فائق السرعة عبر تقنية P2P</div>
   <a href="https://t.me/stlaet1" class="telegram-link" target="_blank">
     <span>تابعونا على التلكرام</span>
   </a>
@@ -232,7 +233,6 @@ body {
 </section>
 
 <script>
-// تم ربط الـ Worker الجديد هنا
 const BACKEND_ENDPOINT = "https://yacine-proxy.hsinnzaer5.workers.dev";
 
 let artInstance = null;
@@ -390,10 +390,18 @@ function startArtPlayer(rawUrl) {
           if (artInstance && artInstance.hls) {
             artInstance.hls.destroy();
           }
+
+          // إعداد مشغل Hls مع تحسين استهلاك الكاش والـ P2P
           const hls = new Hls({
             enableWorker: true,
-            lowLatencyMode: true
+            lowLatencyMode: false,
+            maxBufferLength: 30,
+            maxMaxBufferLength: 60,
+            p2pConfig: {
+              live: true,
+            }
           });
+
           hls.loadSource(url);
           hls.attachMedia(video);
           artInstance.hls = hls;
