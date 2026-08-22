@@ -96,7 +96,6 @@ body::before {
   transform: translateY(-2px);
 }
 
-/* مشغل OvenPlayer */
 .player-section {
   margin-bottom: 20px;
   padding: 15px;
@@ -256,13 +255,12 @@ body::before {
 
 <header class="header glass-panel">
   <h1>العُبودي TV</h1>
-  <div class="subtitle">بث مباشر - beIN SPORTS</div>
+  <div class="subtitle">بث مباشر - قنوات ألوان</div>
   <a href="https://t.me/stlaet1" class="telegram-link" target="_blank">
     <span>تابعونا على التلكرام</span>
   </a>
 </header> 
 
-<!-- مشغل القنوات -->
 <section id="player-container" class="player-section glass-panel">
   <div class="player-header">
     <h3 id="current-channel-title">اسم القناة</h3>
@@ -282,32 +280,20 @@ body::before {
 <script>
 const channelsData = [
   {
-    name: "بين سبورت 1",
-    url: "https://go-tv.site/live/gotv/12345/41.m3u8",
+    name: "الوان 1",
+    url: "http://mh.smpy24.live:80/live/Bengamenbukinafaso2026/msvrpi45e1/1641605.ts",
     quality: "HD",
     status: "مباشر"
   },
   {
-    name: "بين سبورت 2",
-    url: "https://go-tv.site/live/gotv/12345/42.m3u8",
+    name: "الوان 2",
+    url: "http://mh.smpy24.live:80/live/Bengamenbukinafaso2026/msvrpi45e1/1641606.ts",
     quality: "HD",
     status: "مباشر"
   },
   {
-    name: "بين سبورت 3",
-    url: "https://go-tv.site/live/gotv/12345/43.m3u8",
-    quality: "HD",
-    status: "مباشر"
-  },
-  {
-    name: "بين سبورت 4",
-    url: "https://go-tv.site/live/gotv/12345/44.m3u8",
-    quality: "HD",
-    status: "مباشر"
-  },
-  {
-    name: "بين سبورت 5",
-    url: "https://go-tv.site/live/gotv/12345/45.m3u8",
+    name: "الوان 3",
+    url: "http://mh.smpy24.live:80/live/Bengamenbukinafaso2026/msvrpi45e1/1641607.ts",
     quality: "HD",
     status: "مباشر"
   }
@@ -333,7 +319,6 @@ function initPlayer(streamUrl, channelName) {
     controls: true,
     sources: [
       {
-        type: 'hls',
         file: streamUrl,
         label: channelName
       }
@@ -363,7 +348,7 @@ function displayChannels(channels) {
     const card = document.createElement("div");
     card.className = "channel-card";
     card.innerHTML = `
-      <span class="quality">${channel.quality}</span>
+      <span class="quality-badge">${channel.quality}</span>
       <span class="live-badge">${channel.status}</span>
       <div class="channel-name">${channel.name}</div>
     `;
