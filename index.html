@@ -88,13 +88,6 @@ body {
   margin-bottom: 8px;
 }
 
-.player-header h3 {
-  font-size: 1rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 #video-element {
   width: 100%;
   aspect-ratio: 16 / 9;
@@ -103,16 +96,37 @@ body {
   display: block;
 }
 
+.servers-container {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.server-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: white;
+  padding: 5px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.8rem;
+}
+
+.server-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
 .categories-bar {
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  overflow-y: hidden;
   white-space: nowrap;
   padding: 8px 4px;
   margin-bottom: 15px;
   scrollbar-width: none;
-  -ms-overflow-style: none;
 }
 
 .categories-bar::-webkit-scrollbar {
@@ -131,7 +145,6 @@ body {
   font-family: 'Cairo', sans-serif;
   font-weight: 700;
   font-size: 0.85rem;
-  transition: 0.2s;
 }
 
 .cat-btn.active {
@@ -162,10 +175,9 @@ body {
   align-items: center;
   justify-content: center;
   min-height: 70px;
-  transition: 0.2s;
 }
 
-.channel-card:active, .channel-card.active-stream {
+.channel-card.active-stream {
   background: rgba(247, 37, 133, 0.3);
   border-color: var(--accent);
 }
@@ -178,7 +190,6 @@ body {
   border-radius: 8px;
   cursor: pointer;
   font-family: 'Cairo', sans-serif;
-  font-size: 0.8rem;
 }
 
 .status-msg {
@@ -206,6 +217,7 @@ body {
     <button class="close-btn" onclick="closePlayer()">✕ إغلاق</button>
   </div>
   <video id="video-element" controls playsinline autoplay></video>
+  <div class="servers-container" id="servers-list"></div>
 </section>
 
 <div class="categories-bar" id="categories-bar"></div>
@@ -295,99 +307,89 @@ async function loadChannelsByCategory(catId) {
     card.onclick = () => {
       document.querySelectorAll(".channel-card").forEach(c => c.classList.remove("active-stream"));
       card.classList.add("active-stream");
-      playChannel(channel.id, channel.name || channel.title);
+      loadChannelStreams(channel.id, channel.name || channel.title);
     };
     channelsGrid.appendChild(card);
   });
 }
 
-function extractRealLiveUrl(streamData) {
-  let urls = [];
-  const collect = (obj) => {
-    if (!obj) return;
-    if (typeof obj === "string" && (obj.startsWith("http://") || obj.startsWith("https://"))) {
-      urls.push(obj);
-    } else if (Array.isArray(obj)) {
-      obj.forEach(collect);
-    } else if (typeof obj === "object") {
-      Object.values(obj).forEach(collect);
-    }
-  };
-  collect(streamData);
-
-  // استخراج رابط M3U8 المباشر أولاً واستبعاد الإعلانات
-  const m3u8Url = urls.find(u => u.includes(".m3u8") || u.includes("live") || u.includes("stream"));
-  if (m3u8Url) return m3u8Url;
-
-  const validUrl = urls.find(u => !u.endsWith(".mp4") && !u.includes("ad_"));
-  if (validUrl) return validUrl;
-
-  return urls[0] || "";
-}
-
-async function playChannel(channelId, channelName) {
+async function loadChannelStreams(channelId, channelName) {
   const container = document.getElementById("player-container");
   const title = document.getElementById("current-channel-title");
-  const video = document.getElementById("video-element");
+  const serversDiv = document.getElementById("servers-list");
 
   container.style.display = "block";
-  title.textContent = `جاري استخراج البث الحي: ${channelName}...`;
+  title.textContent = `جاري تجهيز سيرفرات: ${channelName}...`;
+  serversDiv.innerHTML = "";
   container.scrollIntoView({ behavior: "smooth" });
 
   try {
-    const streamData = await fetchFromBackend(`/api/channel/${channelId}`);
-    const rawStreamUrl = extractRealLiveUrl(streamData);
-
-    if (!rawStreamUrl) throw new Error("رابط البث غير متوفر حالياً");
-
-    const proxiedStreamUrl = `${BACKEND_ENDPOINT}?stream=${encodeURIComponent(rawStreamUrl)}`;
-
-    if (hlsInstance) {
-      hlsInstance.destroy();
-      hlsInstance = null;
-    }
-
+    const data = await fetchFromBackend(`/api/channel/${channelId}`);
     title.textContent = `🔴 بث مباشر: ${channelName}`;
 
-    if (Hls.isSupported()) {
-      hlsInstance = new Hls({
-        liveSyncDurationCount: 3,
-        maxBufferLength: 10,
-        enableWorker: true,
-        manifestLoadingMaxRetry: 5,
-        levelLoadingMaxRetry: 5
-      });
+    let streamList = [];
 
-      hlsInstance.loadSource(proxiedStreamUrl);
-      hlsInstance.attachMedia(video);
+    if (Array.isArray(data)) {
+      streamList = data;
+    } else if (data.data && Array.isArray(data.data)) {
+      streamList = data.data;
+    } else if (data.url || data.stream_url) {
+      streamList = [{ name: "السيرفر الرئيسي", url: data.url || data.stream_url }];
+    }
 
-      hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
-        video.play().catch(() => {
-          video.muted = true;
-          video.play();
-        });
-      });
+    if (streamList.length === 0) throw new Error("لم يتم العثور على سيرفرات للبث");
 
-      hlsInstance.on(Hls.Events.ERROR, (event, data) => {
-        if (data.fatal) {
-          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-            hlsInstance.startLoad();
-          } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-            hlsInstance.recoverMediaError();
-          } else {
-            hlsInstance.destroy();
-          }
-        }
-      });
-    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = proxiedStreamUrl;
+    streamList.forEach((st, idx) => {
+      const targetUrl = st.url || st.stream_url;
+      if (!targetUrl) return;
+
+      const btn = document.createElement("button");
+      btn.className = `server-btn ${idx === 0 ? 'active' : ''}`;
+      btn.textContent = st.name || st.quality || `سيرفر ${idx + 1}`;
+      btn.onclick = () => {
+        document.querySelectorAll(".server-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        startStream(targetUrl);
+      };
+      serversDiv.appendChild(btn);
+    });
+
+    const firstUrl = streamList[0].url || streamList[0].stream_url;
+    if (firstUrl) startStream(firstUrl);
+
+  } catch (err) {
+    title.textContent = `خطأ: ${err.message}`;
+  }
+}
+
+function startStream(rawUrl) {
+  const video = document.getElementById("video-element");
+  const proxiedStreamUrl = `${BACKEND_ENDPOINT}?stream=${encodeURIComponent(rawUrl)}`;
+
+  if (hlsInstance) {
+    hlsInstance.destroy();
+    hlsInstance = null;
+  }
+
+  if (Hls.isSupported()) {
+    hlsInstance = new Hls({
+      enableWorker: true,
+      lowLatencyMode: true
+    });
+    hlsInstance.loadSource(proxiedStreamUrl);
+    hlsInstance.attachMedia(video);
+    hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
       video.play().catch(() => {
         video.muted = true;
         video.play();
       });
-    }
-  } catch (err) {
-    title.textContent = `خطأ في تشغيل ${channelName}`;
+    });
+  } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    video.src = proxiedStreamUrl;
+    video.play().catch(() => {
+      video.muted = true;
+      video.play();
+    });
   }
 }
 
