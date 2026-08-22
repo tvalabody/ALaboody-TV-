@@ -261,9 +261,13 @@ const BACKEND_ENDPOINT = "https://tvalabody--fcb765689de211f1ac711607ee4eb77e.we
 let playerInstance = null;
 
 async function fetchFromBackend(path) {
-  const res = await fetch(`${BACKEND_ENDPOINT}${path}`);
+  const res = await fetch(`${BACKEND_ENDPOINT}${path}`, {
+    method: "GET",
+    headers: { "Accept": "application/json" }
+  });
   if (!res.ok) throw new Error(`كود الاستجابة: ${res.status}`);
-  return await res.json();
+  const result = await res.json();
+  return result.data ? result.data : result;
 }
 
 async function loadCategories() {
@@ -274,7 +278,9 @@ async function loadCategories() {
     const categories = await fetchFromBackend("/api/categories");
     catBar.innerHTML = "";
 
-    categories.forEach((cat, index) => {
+    const list = Array.isArray(categories) ? categories : (categories.data || []);
+
+    list.forEach((cat, index) => {
       const btn = document.createElement("button");
       btn.className = `cat-btn ${index === 0 ? 'active' : ''}`;
       btn.textContent = cat.name || cat.title;
@@ -286,13 +292,13 @@ async function loadCategories() {
       catBar.appendChild(btn);
     });
 
-    if (categories.length > 0) {
-      loadChannelsByCategory(categories[0].id);
+    if (list.length > 0) {
+      loadChannelsByCategory(list[0].id);
     }
   } catch (err) {
     channelsGrid.innerHTML = `
       <div class="status-msg">
-        ⚠️ تعذر جلب الأقسام: تأكد من تفعيل السيرفر على Val Town.<br>
+        ⚠️ تعذر جلب الأقسام<br>
         <small style="opacity:0.7">${err.message}</small>
       </div>`;
   }
@@ -303,8 +309,10 @@ async function loadChannelsByCategory(catId) {
   channelsGrid.innerHTML = `<div class="status-msg"><div class="spinner"></div>جاري تحميل القنوات...</div>`;
 
   try {
-    const channels = await fetchFromBackend(`/api/channels?category_id=${catId}`);
+    const data = await fetchFromBackend(`/api/channels?category_id=${catId}`);
     channelsGrid.innerHTML = "";
+
+    const channels = Array.isArray(data) ? data : (data.data || []);
 
     if (!channels || channels.length === 0) {
       channelsGrid.innerHTML = `<div class="status-msg">لا توجد قنوات متاحة في هذا القسم.</div>`;
@@ -341,6 +349,8 @@ async function playChannel(channelId, channelName) {
     
     if (Array.isArray(streamData) && streamData.length > 0) {
       streamUrl = streamData[0].url || streamData[0].stream_url;
+    } else if (streamData.data && Array.isArray(streamData.data) && streamData.data.length > 0) {
+      streamUrl = streamData.data[0].url || streamData.data[0].stream_url;
     } else if (streamData.url) {
       streamUrl = streamData.url;
     }
