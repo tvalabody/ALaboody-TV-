@@ -9,8 +9,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet"> 
 
-<!-- مكتبات P2P و ArtPlayer -->
-<script src="https://cdn.jsdelivr.net/npm/cdnbye-core@latest"></script>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <script src="https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js"></script>
 
@@ -91,7 +89,7 @@ body {
   margin-bottom: 8px;
 }
 
-#artplayer-container {
+#artplayer-mount {
   width: 100%;
   aspect-ratio: 16 / 9;
   border-radius: 12px;
@@ -209,7 +207,7 @@ body {
 
 <header class="header glass-panel">
   <h1>العُبودي TV</h1>
-  <div class="subtitle">بث مباشر فائق السرعة عبر تقنية P2P</div>
+  <div class="subtitle">بث مباشر فائق السرعة</div>
   <a href="https://t.me/stlaet1" class="telegram-link" target="_blank">
     <span>تابعونا على التلكرام</span>
   </a>
@@ -220,7 +218,9 @@ body {
     <h3 id="current-channel-title">اسم القناة</h3>
     <button class="close-btn" onclick="closePlayer()">✕ إغلاق</button>
   </div>
-  <div id="artplayer-container"></div>
+  <div id="player-wrapper">
+    <div id="artplayer-mount"></div>
+  </div>
   <div class="servers-container" id="servers-list"></div>
 </section>
 
@@ -238,27 +238,43 @@ const BACKEND_ENDPOINT = "https://yacine-proxy.hsinnzaer5.workers.dev";
 let artInstance = null;
 let currentHls = null;
 
-function cleanupPlayer() {
+// دالة تنظيف صارمة تقطع الصوت وتدمر المشغل بالكامل
+function forceStopAndClean() {
+  // 1. تدمير Hls
   if (currentHls) {
-    currentHls.stopLoad();
-    currentHls.detachMedia();
-    currentHls.destroy();
+    try {
+      currentHls.stopLoad();
+      currentHls.detachMedia();
+      currentHls.destroy();
+    } catch (e) {}
     currentHls = null;
   }
 
+  // 2. إيقاف وتفريغ جميع عناصر الفيديو في الصفحة
+  const videos = document.querySelectorAll('video');
+  videos.forEach(v => {
+    try {
+      v.pause();
+      v.muted = true;
+      v.removeAttribute('src');
+      v.srcObject = null;
+      v.load();
+      v.remove();
+    } catch (e) {}
+  });
+
+  // 3. تدمير مثيل ArtPlayer
   if (artInstance) {
-    if (artInstance.video) {
-      artInstance.video.pause();
-      artInstance.video.removeAttribute('src');
-      artInstance.video.load();
-    }
-    artInstance.destroy(true);
+    try {
+      artInstance.destroy(true);
+    } catch (e) {}
     artInstance = null;
   }
 
-  const container = document.querySelector('#artplayer-container');
-  if (container) {
-    container.innerHTML = '';
+  // 4. إعادة بناء عنصر DOM الخاص بالمشغل للتخلص من أي listeners معلقة
+  const wrapper = document.getElementById('player-wrapper');
+  if (wrapper) {
+    wrapper.innerHTML = '<div id="artplayer-mount"></div>';
   }
 }
 
@@ -347,6 +363,9 @@ async function loadChannelStreams(channelId, channelName) {
   const title = document.getElementById("current-channel-title");
   const serversDiv = document.getElementById("servers-list");
 
+  // إيقاف أي بث سابق فوراً عند الضغط على قناة جديدة
+  forceStopAndClean();
+
   container.style.display = "block";
   title.textContent = `جاري تجهيز سيرفرات: ${channelName}...`;
   serversDiv.innerHTML = "";
@@ -392,12 +411,13 @@ async function loadChannelStreams(channelId, channelName) {
 }
 
 function startArtPlayer(rawUrl) {
+  // تنظيف شامل قبل بدء المشغل الجديد
+  forceStopAndClean();
+
   const proxiedStreamUrl = `${BACKEND_ENDPOINT}?stream=${encodeURIComponent(rawUrl)}`;
 
-  cleanupPlayer();
-
   artInstance = new Artplayer({
-    container: '#artplayer-container',
+    container: '#artplayer-mount',
     url: proxiedStreamUrl,
     type: 'm3u8',
     isLive: true,
@@ -412,8 +432,8 @@ function startArtPlayer(rawUrl) {
           const hls = new Hls({
             enableWorker: true,
             lowLatencyMode: false,
-            maxBufferLength: 30,
-            maxMaxBufferLength: 60,
+            maxBufferLength: 15,
+            maxMaxBufferLength: 30,
           });
 
           hls.loadSource(url);
@@ -428,7 +448,7 @@ function startArtPlayer(rawUrl) {
 }
 
 function closePlayer() {
-  cleanupPlayer();
+  forceStopAndClean();
   document.getElementById("player-container").style.display = "none";
   document.querySelectorAll(".channel-card").forEach(c => c.classList.remove("active-stream"));
 }
