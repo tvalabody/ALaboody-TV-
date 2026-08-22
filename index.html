@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -9,7 +10,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet"> 
 
-<!-- مكتبات OvenPlayer و HLS.js -->
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <script src="https://cdn.jsdelivr.net/npm/ovenplayer/dist/ovenplayer.js"></script>
 
@@ -34,19 +34,6 @@ body {
   padding: 15px;
   min-height: 100vh;
   overflow-x: hidden;
-}
-
-body::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: 
-    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%);
-  z-index: -1;
 }
 
 .glass-panel {
@@ -352,7 +339,7 @@ async function playChannel(channelId, channelName) {
   const title = document.getElementById("current-channel-title");
 
   container.style.display = "block";
-  title.textContent = `جاري استخراج رابط: ${channelName}...`;
+  title.textContent = `جاري تجهيز: ${channelName}...`;
   container.scrollIntoView({ behavior: "smooth" });
 
   try {
@@ -371,17 +358,32 @@ async function playChannel(channelId, channelName) {
 
     if (!rawStreamUrl) throw new Error("رابط البث غير متوفر حالياً");
 
-    // تشغيل الرابط عبر سيرفر البروكسي لتخطي حظر الفيديو والترويسات
-    const proxiedStreamUrl = `${BACKEND_ENDPOINT}?stream=${encodeURIComponent(rawStreamUrl)}`;
-
     title.textContent = `جاري التشغيل: ${channelName}`;
 
-    if (playerInstance) playerInstance.remove();
+    if (playerInstance) {
+      playerInstance.remove();
+      playerInstance = null;
+    }
+
+    const wrapper = document.getElementById("player-wrapper");
+    wrapper.innerHTML = "";
+
+    // إذا كان الرابط صفحة مضمنة (Embed) أو رابط مباشر
+    if (!rawStreamUrl.includes(".m3u8") && !rawStreamUrl.includes(".ts") && (rawStreamUrl.startsWith("http://") || rawStreamUrl.startsWith("https://"))) {
+      wrapper.innerHTML = `<iframe src="${rawStreamUrl}" width="100%" height="100%" frameborder="0" allowfullscreen allow="encrypted-media; autoplay"></iframe>`;
+      return;
+    }
+
+    // تمرير الرابط عبر وسيط البروكسي
+    const proxiedStreamUrl = `${BACKEND_ENDPOINT}?stream=${encodeURIComponent(rawStreamUrl)}`;
 
     playerInstance = OvenPlayer.create("player-wrapper", {
       autoStart: true,
       controls: true,
-      sources: [{ type: "hls", file: proxiedStreamUrl, label: channelName }]
+      sources: [
+        { type: "hls", file: proxiedStreamUrl, label: "سيرفر 1 (بروكسي)" },
+        { type: "hls", file: rawStreamUrl, label: "سيرفر 2 (مباشر)" }
+      ]
     });
   } catch (err) {
     title.textContent = `خطأ: تعذر تشغيل ${channelName}`;
@@ -393,6 +395,8 @@ function closePlayer() {
     playerInstance.remove();
     playerInstance = null;
   }
+  const wrapper = document.getElementById("player-wrapper");
+  wrapper.innerHTML = "";
   document.getElementById("player-container").style.display = "none";
   document.querySelectorAll(".channel-card").forEach(c => c.classList.remove("active-stream"));
 }
