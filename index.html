@@ -236,6 +236,31 @@ body {
 const BACKEND_ENDPOINT = "https://yacine-proxy.hsinnzaer5.workers.dev";
 
 let artInstance = null;
+let currentHls = null;
+
+function cleanupPlayer() {
+  if (currentHls) {
+    currentHls.stopLoad();
+    currentHls.detachMedia();
+    currentHls.destroy();
+    currentHls = null;
+  }
+
+  if (artInstance) {
+    if (artInstance.video) {
+      artInstance.video.pause();
+      artInstance.video.removeAttribute('src');
+      artInstance.video.load();
+    }
+    artInstance.destroy(true);
+    artInstance = null;
+  }
+
+  const container = document.querySelector('#artplayer-container');
+  if (container) {
+    container.innerHTML = '';
+  }
+}
 
 async function fetchFromBackend(path) {
   const res = await fetch(`${BACKEND_ENDPOINT}${path}`);
@@ -369,10 +394,7 @@ async function loadChannelStreams(channelId, channelName) {
 function startArtPlayer(rawUrl) {
   const proxiedStreamUrl = `${BACKEND_ENDPOINT}?stream=${encodeURIComponent(rawUrl)}`;
 
-  if (artInstance) {
-    artInstance.destroy(true);
-    artInstance = null;
-  }
+  cleanupPlayer();
 
   artInstance = new Artplayer({
     container: '#artplayer-container',
@@ -387,24 +409,16 @@ function startArtPlayer(rawUrl) {
     customType: {
       m3u8: function (video, url) {
         if (Hls.isSupported()) {
-          if (artInstance && artInstance.hls) {
-            artInstance.hls.destroy();
-          }
-
-          // إعداد مشغل Hls مع تحسين استهلاك الكاش والـ P2P
           const hls = new Hls({
             enableWorker: true,
             lowLatencyMode: false,
             maxBufferLength: 30,
             maxMaxBufferLength: 60,
-            p2pConfig: {
-              live: true,
-            }
           });
 
           hls.loadSource(url);
           hls.attachMedia(video);
-          artInstance.hls = hls;
+          currentHls = hls;
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
           video.src = url;
         }
@@ -414,13 +428,7 @@ function startArtPlayer(rawUrl) {
 }
 
 function closePlayer() {
-  if (artInstance) {
-    if (artInstance.hls) {
-      artInstance.hls.destroy();
-    }
-    artInstance.destroy(true);
-    artInstance = null;
-  }
+  cleanupPlayer();
   document.getElementById("player-container").style.display = "none";
   document.querySelectorAll(".channel-card").forEach(c => c.classList.remove("active-stream"));
 }
