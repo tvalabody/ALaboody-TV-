@@ -7,7 +7,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet"> 
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet"> 
 
 <!-- مكتبات OvenPlayer و HLS.js -->
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
@@ -19,7 +19,6 @@
   --accent: #f72585;
   --glass-bg: rgba(255, 255, 255, 0.1);
   --glass-border: rgba(255, 255, 255, 0.15);
-  --blur: blur(15px);
 }
 
 * {
@@ -33,25 +32,12 @@ body {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 15px;
   min-height: 100vh;
-  overflow-x: hidden;
-}
-
-body::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: 
-    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%);
-  z-index: -1;
+  color: white;
 }
 
 .glass-panel {
   background: var(--glass-bg);
-  backdrop-filter: var(--blur);
+  backdrop-filter: blur(15px);
   border: 1px solid var(--glass-border);
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
@@ -64,17 +50,8 @@ body::before {
 }
 
 .header h1 {
-  font-size: 2rem;
-  background: linear-gradient(135deg, #fff 0%, #e2e8ff 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  font-size: 1.8rem;
   margin-bottom: 5px;
-}
-
-.subtitle {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 0.9rem;
 }
 
 .player-section {
@@ -88,7 +65,6 @@ body::before {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
-  color: white;
 }
 
 #player-wrapper {
@@ -99,96 +75,79 @@ body::before {
   background: #000;
 }
 
-.channels-section {
-  padding: 15px;
+.categories-bar {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 10px 5px;
+  margin-bottom: 15px;
+}
+
+.cat-btn {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: 'Cairo', sans-serif;
+  font-weight: 600;
+  transition: 0.3s;
+}
+
+.cat-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
 }
 
 .channels-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 12px;
+  padding: 15px;
 }
 
 .channel-card {
   background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 12px;
-  padding: 20px 15px;
+  padding: 18px 10px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  min-height: 90px;
+  transition: 0.3s ease;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
+  min-height: 80px;
+  font-weight: 700;
 }
 
 .channel-card:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.2);
   transform: translateY(-2px);
 }
 
 .channel-card.active-stream {
   border-color: var(--accent);
-  background: rgba(247, 37, 133, 0.15);
-}
-
-.channel-name {
-  font-weight: 700;
-  color: white;
-  font-size: 1rem;
-}
-
-.badge {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  background: rgba(67, 97, 238, 0.8);
-  color: white;
-  padding: 2px 6px;
-  border-radius: 6px;
-  font-size: 0.65rem;
-  font-weight: 600;
+  background: rgba(247, 37, 133, 0.25);
 }
 
 .close-btn {
   background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: white;
   padding: 6px 12px;
   border-radius: 8px;
   cursor: pointer;
   font-family: 'Cairo', sans-serif;
-  transition: 0.3s;
 }
 
-.close-btn:hover {
-  background: rgba(247, 37, 133, 0.4);
-}
-
-.loading {
+.status-msg {
   text-align: center;
   padding: 30px;
-  color: white;
   grid-column: 1 / -1;
-}
-
-.spinner {
-  width: 30px;
-  height: 30px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  border-top: 3px solid white;
-  border-radius: 50%;
-  margin: 0 auto 10px;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
+  font-size: 1rem;
 }
 </style>
 </head> 
@@ -196,110 +155,125 @@ body::before {
 <body> 
 
 <header class="header glass-panel">
-  <h1>العُبودي TV</h1>
-  <div class="subtitle">فك تشفير وبث Yacine TV المباشر عبر OvenPlayer</div>
+  <h1>📺 العُبودي TV</h1>
+  <div>بث مباشر لجميع باقات ياسين تيفي</div>
 </header> 
 
 <section id="player-container" class="player-section glass-panel">
   <div class="player-header">
     <h3 id="current-channel-title">اسم القناة</h3>
-    <button class="close-btn" onclick="closePlayer()">إغلاق المشغل ✕</button>
+    <button class="close-btn" onclick="closePlayer()">✕ إغلاق</button>
   </div>
   <div id="player-wrapper"></div>
 </section>
 
-<section class="channels-section glass-panel">
-  <div id="channels" class="channels-grid">
-    <div class="loading">
-      <div class="spinner"></div>
-      جاري فك تشفير وجلب القنوات...
-    </div>
+<div class="categories-bar" id="categories-bar"></div>
+
+<section class="glass-panel">
+  <div class="channels-grid" id="channels">
+    <div class="status-msg">جاري تحميل الأقسام والقنوات...</div>
   </div>
 </section>
 
 <script>
+const BACKEND_ENDPOINT = "https://tvalabody-alabody.web.val.run";
+
 let playerInstance = null;
 
-// دالة فك التشفير بلغة JavaScript (XOR Decryption)
-function decryptYacinePayload(base64Body, tHeader) {
-  const binaryStr = atob(base64Body);
-  const decodedBytes = new Uint8Array(binaryStr.length);
-  for (let i = 0; i < binaryStr.length; i++) {
-    decodedBytes[i] = binaryStr.charCodeAt(i);
-  }
-
-  const keyStr = "c!xZj+N9&G@Ev@vw" + (tHeader || Math.floor(Date.now() / 1000).toString());
-  const keyEncoder = new TextEncoder();
-  const keyBytes = keyEncoder.encode(keyStr);
-
-  const plainBytes = new Uint8Array(decodedBytes.length);
-  for (let i = 0; i < decodedBytes.length; i++) {
-    plainBytes[i] = decodedBytes[i] ^ keyBytes[i % keyBytes.length];
-  }
-
-  const textDecoder = new TextDecoder('utf-8');
-  let plainStr = textDecoder.decode(plainBytes);
-  plainStr = plainStr.replace(/\\\//g, '/');
-  return JSON.parse(plainStr);
+async function fetchFromBackend(path) {
+  const res = await fetch(`${BACKEND_ENDPOINT}${path}`);
+  if (!res.ok) throw new Error(`خطأ في الاستجابة: ${res.status}`);
+  return await res.json();
 }
 
-// دالة جلب البيانات مع تخطي قيود الـ CORS
-async function fetchYacineApi(apiUrl) {
-  // استخدام وكيل لفك القيود وإرسال الـ Headers المطلوبة
-  const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;
-  
-  const response = await fetch(proxyUrl);
-  const data = await response.json();
-  
-  const tHeader = Math.floor(Date.now() / 1000).toString();
-  return decryptYacinePayload(data.contents.trim(), tHeader);
-}
-
-// تشغيل القناة في OvenPlayer
-async function playChannel(channelId, channelName) {
-  const container = document.getElementById('player-container');
-  const title = document.getElementById('current-channel-title');
-  
-  container.style.display = 'block';
-  title.textContent = `جاري استخراج السيرفر: ${channelName}...`;
-  container.scrollIntoView({ behavior: 'smooth' });
+async function loadCategories() {
+  const catBar = document.getElementById("categories-bar");
+  const channelsGrid = document.getElementById("channels");
 
   try {
-    const streamInfo = await fetchYacineApi(`https://def.yacinelive.com/api/channel/${channelId}`);
-    
-    // استخراج رابط البث من مصفوفة السيرفرات المفكوكة
-    let streamUrl = "";
-    if (Array.isArray(streamInfo) && streamInfo.length > 0) {
-      streamUrl = streamInfo[0].url || streamInfo[0].stream_url;
-    } else if (streamInfo.url) {
-      streamUrl = streamInfo.url;
-    }
+    const categories = await fetchFromBackend("/api/categories");
+    catBar.innerHTML = "";
 
-    if (!streamUrl) {
-      alert("تعذر العثور على رابط بث نشط للقناة حالياً.");
+    categories.forEach((cat, index) => {
+      const btn = document.createElement("button");
+      btn.className = `cat-btn ${index === 0 ? 'active' : ''}`;
+      btn.textContent = cat.name || cat.title;
+      btn.onclick = () => {
+        document.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        loadChannelsByCategory(cat.id);
+      };
+      catBar.appendChild(btn);
+    });
+
+    if (categories.length > 0) {
+      loadChannelsByCategory(categories[0].id);
+    }
+  } catch (err) {
+    channelsGrid.innerHTML = `<div class="status-msg">⚠️ تعذر تحميل الأقسام: ${err.message}</div>`;
+  }
+}
+
+async function loadChannelsByCategory(catId) {
+  const channelsGrid = document.getElementById("channels");
+  channelsGrid.innerHTML = `<div class="status-msg">جاري تحميل القنوات...</div>`;
+
+  try {
+    const channels = await fetchFromBackend(`/api/channels?category_id=${catId}`);
+    channelsGrid.innerHTML = "";
+
+    if (!channels || channels.length === 0) {
+      channelsGrid.innerHTML = `<div class="status-msg">لا توجد قنوات متاحة في هذا القسم.</div>`;
       return;
     }
 
-    title.textContent = `جاري التشغيل: ${channelName}`;
+    channels.forEach(channel => {
+      const card = document.createElement("div");
+      card.className = "channel-card";
+      card.textContent = channel.name;
+      card.onclick = () => {
+        document.querySelectorAll(".channel-card").forEach(c => c.classList.remove("active-stream"));
+        card.classList.add("active-stream");
+        playChannel(channel.id, channel.name);
+      };
+      channelsGrid.appendChild(card);
+    });
+  } catch (err) {
+    channelsGrid.innerHTML = `<div class="status-msg">⚠️ فشل تحميل قنوات هذا القسم</div>`;
+  }
+}
 
-    if (playerInstance) {
-      playerInstance.remove();
+async function playChannel(channelId, channelName) {
+  const container = document.getElementById("player-container");
+  const title = document.getElementById("current-channel-title");
+
+  container.style.display = "block";
+  title.textContent = `جاري استخراج وتشغيل: ${channelName}...`;
+  container.scrollIntoView({ behavior: "smooth" });
+
+  try {
+    const streamData = await fetchFromBackend(`/api/channel/${channelId}`);
+    let streamUrl = "";
+    
+    if (Array.isArray(streamData) && streamData.length > 0) {
+      streamUrl = streamData[0].url || streamData[0].stream_url;
+    } else if (streamData.url) {
+      streamUrl = streamData.url;
     }
 
-    playerInstance = OvenPlayer.create('player-wrapper', {
+    if (!streamUrl) throw new Error("رابط البث غير متوفر حالياً");
+
+    title.textContent = `جاري التشغيل: ${channelName}`;
+
+    if (playerInstance) playerInstance.remove();
+
+    playerInstance = OvenPlayer.create("player-wrapper", {
       autoStart: true,
       controls: true,
-      sources: [
-        {
-          type: 'hls',
-          file: streamUrl,
-          label: channelName
-        }
-      ]
+      sources: [{ type: "hls", file: streamUrl, label: channelName }]
     });
-  } catch (error) {
-    title.textContent = `خطأ أثناء تشغيل: ${channelName}`;
-    console.error(error);
+  } catch (err) {
+    title.textContent = `خطأ: تعذر تشغيل ${channelName}`;
   }
 }
 
@@ -308,43 +282,11 @@ function closePlayer() {
     playerInstance.remove();
     playerInstance = null;
   }
-  document.getElementById('player-container').style.display = 'none';
-  document.querySelectorAll('.channel-card').forEach(c => c.classList.remove('active-stream'));
+  document.getElementById("player-container").style.display = "none";
+  document.querySelectorAll(".channel-card").forEach(c => c.classList.remove("active-stream"));
 }
 
-// تحميل القنوات المتاحة
-async function loadChannels() {
-  const grid = document.getElementById('channels');
-  try {
-    // جلب القنوات لقناة beIN SPORTS 1 الافتراضية
-    const defaultChannels = [
-      { id: 1424, name: "beIN SPORTS 1" }
-    ];
-
-    grid.innerHTML = "";
-    defaultChannels.forEach(ch => {
-      const card = document.createElement("div");
-      card.className = "channel-card";
-      card.innerHTML = `
-        <span class="badge">Live API</span>
-        <div class="channel-name">${ch.name}</div>
-      `;
-      
-      card.onclick = () => {
-        document.querySelectorAll('.channel-card').forEach(c => c.classList.remove('active-stream'));
-        card.classList.add('active-stream');
-        playChannel(ch.id, ch.name);
-      };
-
-      grid.appendChild(card);
-    });
-
-  } catch (e) {
-    grid.innerHTML = `<div class="loading">❌ فشل تحميل القنوات: ${e.message}</div>`;
-  }
-}
-
-document.addEventListener('DOMContentLoaded', loadChannels);
+document.addEventListener("DOMContentLoaded", loadCategories);
 </script>
 </body>
 </html>
