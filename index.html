@@ -205,7 +205,7 @@ body {
     <h3 id="current-channel-title">اسم القناة</h3>
     <button class="close-btn" onclick="closePlayer()">✕ إغلاق</button>
   </div>
-  <video id="video-element" controls autoplay playsinline></video>
+  <video id="video-element" controls playsinline></video>
 </section>
 
 <div class="categories-bar" id="categories-bar"></div>
@@ -307,7 +307,7 @@ async function playChannel(channelId, channelName) {
   const video = document.getElementById("video-element");
 
   container.style.display = "block";
-  title.textContent = `جاري تجهيز البث: ${channelName}...`;
+  title.textContent = `جاري بدء البث: ${channelName}...`;
   container.scrollIntoView({ behavior: "smooth" });
 
   try {
@@ -337,39 +337,34 @@ async function playChannel(channelId, channelName) {
 
     if (Hls.isSupported()) {
       hlsInstance = new Hls({
-        enableWorker: true,
-        lowLatencyMode: true,
-        backBufferLength: 90
+        liveSyncDurationCount: 3,
+        liveMaxLatencyDurationCount: 6,
+        maxBufferLength: 10,
+        enableWorker: true
       });
+
       hlsInstance.loadSource(proxiedStreamUrl);
       hlsInstance.attachMedia(video);
+
       hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
-        video.play().catch(() => {
-          video.muted = true;
-          video.play();
-        });
+        video.currentTime = video.duration || 0;
+        video.play().catch(() => {});
       });
+
       hlsInstance.on(Hls.Events.ERROR, (event, data) => {
         if (data.fatal) {
-          switch (data.type) {
-            case Hls.ErrorTypes.NETWORK_ERROR:
-              hlsInstance.startLoad();
-              break;
-            case Hls.ErrorTypes.MEDIA_ERROR:
-              hlsInstance.recoverMediaError();
-              break;
-            default:
-              hlsInstance.destroy();
-              break;
+          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+            hlsInstance.startLoad();
+          } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+            hlsInstance.recoverMediaError();
+          } else {
+            hlsInstance.destroy();
           }
         }
       });
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = proxiedStreamUrl;
-      video.play().catch(() => {
-        video.muted = true;
-        video.play();
-      });
+      video.play().catch(() => {});
     }
   } catch (err) {
     title.textContent = `خطأ في تشغيل ${channelName}`;
