@@ -1,17 +1,16 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>📺 العُبودي TV</title> 
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet"> 
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet"> 
 
+<!-- مكتبة Hls.js المباشرة -->
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-<script src="https://cdn.jsdelivr.net/npm/ovenplayer/dist/ovenplayer.js"></script>
 
 <style>
 :root {
@@ -19,49 +18,48 @@
   --accent: #f72585;
   --glass-bg: rgba(255, 255, 255, 0.1);
   --glass-border: rgba(255, 255, 255, 0.15);
-  --blur: blur(15px);
+  --blur: blur(16px);
 }
 
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
   font-family: 'Cairo', sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 15px;
+  background: linear-gradient(135deg, #1f1c2c 0%, #928dab 100%);
+  padding: 12px;
   min-height: 100vh;
-  overflow-x: hidden;
+  color: white;
 }
 
 .glass-panel {
   background: var(--glass-bg);
   backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
   border: 1px solid var(--glass-border);
   border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
 .header {
   text-align: center;
-  padding: 20px;
-  margin-bottom: 15px;
+  padding: 15px;
+  margin-bottom: 12px;
 }
 
 .header h1 {
-  font-size: 2rem;
-  background: linear-gradient(135deg, #fff 0%, #e2e8ff 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  margin-bottom: 5px;
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin-bottom: 4px;
 }
 
 .subtitle {
   color: rgba(255, 255, 255, 0.8);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .telegram-link {
@@ -69,23 +67,18 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: rgba(0, 136, 204, 0.2);
-  padding: 8px 16px;
-  border-radius: 12px;
+  background: #0088cc;
+  padding: 6px 14px;
+  border-radius: 10px;
   color: white;
   text-decoration: none;
+  font-size: 0.85rem;
   font-weight: 600;
-  transition: all 0.3s ease;
-}
-
-.telegram-link:hover {
-  background: rgba(0, 136, 204, 0.3);
-  transform: translateY(-2px);
 }
 
 .player-section {
-  margin-bottom: 20px;
-  padding: 15px;
+  margin-bottom: 15px;
+  padding: 12px;
   display: none;
 }
 
@@ -93,119 +86,108 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
-  color: white;
+  margin-bottom: 8px;
 }
 
-#player-wrapper {
+.player-header h3 {
+  font-size: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#video-element {
   width: 100%;
   aspect-ratio: 16 / 9;
   border-radius: 12px;
-  overflow: hidden;
   background: #000;
+  display: block;
 }
 
+/* شريط الأقسام الأفقي للتمرير */
 .categories-bar {
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  padding: 10px 5px;
+  overflow-y: hidden;
+  white-space: nowrap;
+  padding: 8px 4px;
   margin-bottom: 15px;
-  justify-content: center;
-  flex-wrap: wrap;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.categories-bar::-webkit-scrollbar {
+  display: none;
 }
 
 .cat-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: rgba(255, 255, 255, 0.9);
+  display: inline-block;
+  flex: 0 0 auto;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
   padding: 8px 16px;
-  border-radius: 12px;
+  border-radius: 20px;
   cursor: pointer;
   font-family: 'Cairo', sans-serif;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.85rem;
-  transition: all 0.3s ease;
+  transition: 0.2s;
 }
 
 .cat-btn.active {
   background: var(--accent);
   border-color: var(--accent);
-  box-shadow: 0 0 10px rgba(247, 37, 133, 0.4);
 }
 
 .channels-section {
-  padding: 15px;
+  padding: 12px;
 }
 
 .channels-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
 }
 
 .channel-card {
   background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 12px;
-  padding: 20px 10px;
+  padding: 16px 8px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.9rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  color: white;
-  font-weight: 700;
-  min-height: 80px;
+  min-height: 70px;
+  transition: 0.2s;
 }
 
-.channel-card:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
-}
-
-.channel-card.active-stream {
+.channel-card:active, .channel-card.active-stream {
+  background: rgba(247, 37, 133, 0.3);
   border-color: var(--accent);
-  background: rgba(247, 37, 133, 0.25);
 }
 
 .close-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: white;
-  padding: 6px 12px;
+  padding: 4px 10px;
   border-radius: 8px;
   cursor: pointer;
   font-family: 'Cairo', sans-serif;
-  transition: 0.3s;
-}
-
-.close-btn:hover {
-  background: rgba(247, 37, 133, 0.4);
+  font-size: 0.8rem;
 }
 
 .status-msg {
   text-align: center;
-  padding: 30px;
-  color: white;
+  padding: 25px;
   grid-column: 1 / -1;
-}
-
-.spinner {
-  width: 30px;
-  height: 30px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  border-top: 3px solid white;
-  border-radius: 50%;
-  margin: 0 auto 10px;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
+  font-size: 0.9rem;
 }
 </style>
 </head> 
@@ -217,9 +199,6 @@ body {
   <div class="subtitle">بث مباشر لجميع باقات ياسين تيفي</div>
   <a href="https://t.me/stlaet1" class="telegram-link" target="_blank">
     <span>تابعونا على التلكرام</span>
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.14.141-.259.259-.374.261l.213-3.053 5.56-5.022c.24-.213-.054-.334-.373-.121l-6.869 4.326-2.96-.924c-.64-.203-.658-.64.136-.954l11.566-4.458c.538-.196 1.006.128.832.941z"/>
-    </svg>
   </a>
 </header> 
 
@@ -228,33 +207,27 @@ body {
     <h3 id="current-channel-title">اسم القناة</h3>
     <button class="close-btn" onclick="closePlayer()">✕ إغلاق</button>
   </div>
-  <div id="player-wrapper"></div>
+  <video id="video-element" controls playsinline></video>
 </section>
 
+<!-- شريط الأقسام الأفقي -->
 <div class="categories-bar" id="categories-bar"></div>
 
 <section class="channels-section glass-panel">
   <div class="channels-grid" id="channels">
-    <div class="status-msg">
-      <div class="spinner"></div>
-      جاري تحميل الأقسام والقنوات...
-    </div>
+    <div class="status-msg">جاري تحميل الأقسام...</div>
   </div>
 </section>
 
 <script>
 const BACKEND_ENDPOINT = "https://tvalabody--fcb765689de211f1ac711607ee4eb77e.web.val.run";
 
-let playerInstance = null;
+let hlsInstance = null;
 
 async function fetchFromBackend(path) {
-  const res = await fetch(`${BACKEND_ENDPOINT}${path}`, {
-    method: "GET",
-    headers: { "Accept": "application/json" }
-  });
-  if (!res.ok) throw new Error(`كود الاستجابة: ${res.status}`);
-  const result = await res.json();
-  return result;
+  const res = await fetch(`${BACKEND_ENDPOINT}${path}`);
+  if (!res.ok) throw new Error(`Status: ${res.status}`);
+  return await res.json();
 }
 
 async function loadCategories() {
@@ -274,6 +247,7 @@ async function loadCategories() {
       btn.onclick = () => {
         document.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
+        btn.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
         loadChannelsByCategory(cat.id);
       };
       catBar.appendChild(btn);
@@ -283,17 +257,13 @@ async function loadCategories() {
       loadChannelsByCategory(list[0].id);
     }
   } catch (err) {
-    channelsGrid.innerHTML = `
-      <div class="status-msg">
-        ⚠️ تعذر جلب الأقسام<br>
-        <small style="opacity:0.7">${err.message}</small>
-      </div>`;
+    channelsGrid.innerHTML = `<div class="status-msg">⚠️ تعذر تحميل الأقسام: ${err.message}</div>`;
   }
 }
 
 async function loadChannelsByCategory(catId) {
   const channelsGrid = document.getElementById("channels");
-  channelsGrid.innerHTML = `<div class="status-msg"><div class="spinner"></div>جاري تحميل القنوات...</div>`;
+  channelsGrid.innerHTML = `<div class="status-msg">جاري جلب القنوات...</div>`;
 
   const endpoints = [
     `/api/categories/${catId}/channels`,
@@ -337,9 +307,10 @@ async function loadChannelsByCategory(catId) {
 async function playChannel(channelId, channelName) {
   const container = document.getElementById("player-container");
   const title = document.getElementById("current-channel-title");
+  const video = document.getElementById("video-element");
 
   container.style.display = "block";
-  title.textContent = `جاري تجهيز: ${channelName}...`;
+  title.textContent = `جاري التشغيل: ${channelName}...`;
   container.scrollIntoView({ behavior: "smooth" });
 
   try {
@@ -356,47 +327,44 @@ async function playChannel(channelId, channelName) {
       rawStreamUrl = streamData.stream_url;
     }
 
-    if (!rawStreamUrl) throw new Error("رابط البث غير متوفر حالياً");
+    if (!rawStreamUrl) throw new Error("رابط البث غير متوفر");
 
-    title.textContent = `جاري التشغيل: ${channelName}`;
-
-    if (playerInstance) {
-      playerInstance.remove();
-      playerInstance = null;
-    }
-
-    const wrapper = document.getElementById("player-wrapper");
-    wrapper.innerHTML = "";
-
-    // إذا كان الرابط صفحة مضمنة (Embed) أو رابط مباشر
-    if (!rawStreamUrl.includes(".m3u8") && !rawStreamUrl.includes(".ts") && (rawStreamUrl.startsWith("http://") || rawStreamUrl.startsWith("https://"))) {
-      wrapper.innerHTML = `<iframe src="${rawStreamUrl}" width="100%" height="100%" frameborder="0" allowfullscreen allow="encrypted-media; autoplay"></iframe>`;
-      return;
-    }
-
-    // تمرير الرابط عبر وسيط البروكسي
     const proxiedStreamUrl = `${BACKEND_ENDPOINT}?stream=${encodeURIComponent(rawStreamUrl)}`;
 
-    playerInstance = OvenPlayer.create("player-wrapper", {
-      autoStart: true,
-      controls: true,
-      sources: [
-        { type: "hls", file: proxiedStreamUrl, label: "سيرفر 1 (بروكسي)" },
-        { type: "hls", file: rawStreamUrl, label: "سيرفر 2 (مباشر)" }
-      ]
-    });
+    if (hlsInstance) {
+      hlsInstance.destroy();
+      hlsInstance = null;
+    }
+
+    if (Hls.isSupported()) {
+      hlsInstance = new Hls({
+        enableWorker: true,
+        lowLatencyMode: true
+      });
+      hlsInstance.loadSource(proxiedStreamUrl);
+      hlsInstance.attachMedia(video);
+      hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.play().catch(() => {});
+      });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = proxiedStreamUrl;
+      video.addEventListener('loadedmetadata', () => {
+        video.play().catch(() => {});
+      });
+    }
   } catch (err) {
-    title.textContent = `خطأ: تعذر تشغيل ${channelName}`;
+    title.textContent = `خطأ في التشغيل: ${err.message}`;
   }
 }
 
 function closePlayer() {
-  if (playerInstance) {
-    playerInstance.remove();
-    playerInstance = null;
+  const video = document.getElementById("video-element");
+  video.pause();
+  video.src = "";
+  if (hlsInstance) {
+    hlsInstance.destroy();
+    hlsInstance = null;
   }
-  const wrapper = document.getElementById("player-wrapper");
-  wrapper.innerHTML = "";
   document.getElementById("player-container").style.display = "none";
   document.querySelectorAll(".channel-card").forEach(c => c.classList.remove("active-stream"));
 }
