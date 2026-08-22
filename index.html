@@ -309,7 +309,14 @@ async function loadChannelsByCategory(catId) {
   channelsGrid.innerHTML = `<div class="status-msg"><div class="spinner"></div>جاري تحميل القنوات...</div>`;
 
   try {
-    const data = await fetchFromBackend(`/api/channels?category_id=${catId}`);
+    // محاولة جلب القنوات عبر المسار الرئيسي لـ Yacine API
+    let data;
+    try {
+      data = await fetchFromBackend(`/api/category/${catId}/channels`);
+    } catch {
+      data = await fetchFromBackend(`/api/channels?category_id=${catId}`);
+    }
+
     channelsGrid.innerHTML = "";
 
     const channels = Array.isArray(data) ? data : (data.data || []);
@@ -322,11 +329,11 @@ async function loadChannelsByCategory(catId) {
     channels.forEach(channel => {
       const card = document.createElement("div");
       card.className = "channel-card";
-      card.textContent = channel.name;
+      card.textContent = channel.name || channel.title;
       card.onclick = () => {
         document.querySelectorAll(".channel-card").forEach(c => c.classList.remove("active-stream"));
         card.classList.add("active-stream");
-        playChannel(channel.id, channel.name);
+        playChannel(channel.id, channel.name || channel.title);
       };
       channelsGrid.appendChild(card);
     });
