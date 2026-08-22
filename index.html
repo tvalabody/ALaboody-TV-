@@ -267,7 +267,7 @@ async function fetchFromBackend(path) {
   });
   if (!res.ok) throw new Error(`كود الاستجابة: ${res.status}`);
   const result = await res.json();
-  return result.data ? result.data : result;
+  return result;
 }
 
 async function loadCategories() {
@@ -275,10 +275,10 @@ async function loadCategories() {
   const channelsGrid = document.getElementById("channels");
 
   try {
-    const categories = await fetchFromBackend("/api/categories");
+    const res = await fetchFromBackend("/api/categories");
     catBar.innerHTML = "";
 
-    const list = Array.isArray(categories) ? categories : (categories.data || []);
+    const list = Array.isArray(res) ? res : (res.data || []);
 
     list.forEach((cat, index) => {
       const btn = document.createElement("button");
@@ -308,38 +308,48 @@ async function loadChannelsByCategory(catId) {
   const channelsGrid = document.getElementById("channels");
   channelsGrid.innerHTML = `<div class="status-msg"><div class="spinner"></div>جاري تحميل القنوات...</div>`;
 
-  try {
-    // محاولة جلب القنوات عبر المسار الرئيسي لـ Yacine API
-    let data;
+  // قائمة بجميع مسارات قنوات الأقسام المحتملة في سيرفرات ياسين
+  const endpoints = [
+    `/api/categories/${catId}/channels`,
+    `/api/category/${catId}/channels`,
+    `/api/channels?category_id=${catId}`,
+    `/api/channels/${catId}`
+  ];
+
+  let channels = [];
+  let errorLog = "";
+
+  for (const ep of endpoints) {
     try {
-      data = await fetchFromBackend(`/api/category/${catId}/channels`);
-    } catch {
-      data = await fetchFromBackend(`/api/channels?category_id=${catId}`);
+      const res = await fetchFromBackend(ep);
+      const extracted = Array.isArray(res) ? res : (res.data || []);
+      if (Array.isArray(extracted) && extracted.length > 0) {
+        channels = extracted;
+        break;
+      }
+    } catch (e) {
+      errorLog = e.message;
     }
-
-    channelsGrid.innerHTML = "";
-
-    const channels = Array.isArray(data) ? data : (data.data || []);
-
-    if (!channels || channels.length === 0) {
-      channelsGrid.innerHTML = `<div class="status-msg">لا توجد قنوات متاحة في هذا القسم.</div>`;
-      return;
-    }
-
-    channels.forEach(channel => {
-      const card = document.createElement("div");
-      card.className = "channel-card";
-      card.textContent = channel.name || channel.title;
-      card.onclick = () => {
-        document.querySelectorAll(".channel-card").forEach(c => c.classList.remove("active-stream"));
-        card.classList.add("active-stream");
-        playChannel(channel.id, channel.name || channel.title);
-      };
-      channelsGrid.appendChild(card);
-    });
-  } catch (err) {
-    channelsGrid.innerHTML = `<div class="status-msg">⚠️ تعذر تحميل قنوات هذا القسم</div>`;
   }
+
+  channelsGrid.innerHTML = "";
+
+  if (!channels || channels.length === 0) {
+    channelsGrid.innerHTML = `<div class="status-msg">لا توجد قنوات متاحة في هذا القسم أو تعذر قراءتها.</div>`;
+    return;
+  }
+
+  channels.forEach(channel => {
+    const card = document.createElement("div");
+    card.className = "channel-card";
+    card.textContent = channel.name || channel.title;
+    card.onclick = () => {
+      document.querySelectorAll(".channel-card").forEach(c => c.classList.remove("active-stream"));
+      card.classList.add("active-stream");
+      playChannel(channel.id, channel.name || channel.title);
+    };
+    channelsGrid.appendChild(card);
+  });
 }
 
 async function playChannel(channelId, channelName) {
@@ -347,7 +357,7 @@ async function playChannel(channelId, channelName) {
   const title = document.getElementById("current-channel-title");
 
   container.style.display = "block";
-  title.textContent = `جاري تجهيز: ${channelName}...`;
+  title.textContent = `جاري استخراج رابط: ${channelName}...`;
   container.scrollIntoView({ behavior: "smooth" });
 
   try {
@@ -360,6 +370,8 @@ async function playChannel(channelId, channelName) {
       streamUrl = streamData.data[0].url || streamData.data[0].stream_url;
     } else if (streamData.url) {
       streamUrl = streamData.url;
+    } else if (streamData.stream_url) {
+      streamUrl = streamData.stream_url;
     }
 
     if (!streamUrl) throw new Error("رابط البث غير متوفر حالياً");
@@ -374,7 +386,7 @@ async function playChannel(channelId, channelName) {
       sources: [{ type: "hls", file: streamUrl, label: channelName }]
     });
   } catch (err) {
-    title.textContent = `خطأ أثناء تشغيل ${channelName}`;
+    title.textContent = `خطأ: تعذر تشغيل ${channelName}`;
   }
 }
 
