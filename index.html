@@ -16,12 +16,12 @@
 :root {
   --primary: #4361ee;
   --accent: #f72585;
-  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-bg: rgba(255, 255, 255, 0.08);
   --glass-border: rgba(255, 255, 255, 0.15);
   --blur: blur(16px);
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 body {
   font-family: 'Cairo', sans-serif;
   background: linear-gradient(135deg, #1f1c2c 0%, #928dab 100%);
@@ -72,8 +72,11 @@ body {
 }
 .server-btn.active { background: var(--accent); border-color: var(--accent); }
 
-.categories-bar { display: flex; gap: 8px; overflow-x: auto; white-space: nowrap; padding: 8px 4px; margin-bottom: 15px; }
+.categories-bar { display: flex; gap: 8px; overflow-x: auto; white-space: nowrap; padding: 8px 4px; margin-bottom: 15px; scrollbar-width: none; }
+.categories-bar::-webkit-scrollbar { display: none; }
 .cat-btn {
+  display: inline-block;
+  flex: 0 0 auto;
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: white;
@@ -82,10 +85,11 @@ body {
   cursor: pointer;
   font-family: 'Cairo';
   font-weight: 700;
+  font-size: 0.85rem;
 }
-.cat-btn.active { background: var(--accent); }
+.cat-btn.active { background: var(--accent); border-color: var(--accent); }
 
-.channels-section { padding: 12px; }
+.channels-section { padding: 12px; min-height: 200px; }
 .channels-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
 .channel-card {
   background: rgba(255, 255, 255, 0.08);
@@ -97,7 +101,8 @@ body {
   font-weight: 700;
 }
 .channel-card.active-stream { background: rgba(247, 37, 133, 0.3); border-color: var(--accent); }
-.close-btn { background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.2); color: white; padding: 4px 10px; border-radius: 8px; cursor: pointer; }
+.close-btn { background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.2); color: white; padding: 4px 10px; border-radius: 8px; cursor: pointer; font-family: 'Cairo'; }
+.loading-text { text-align: center; padding: 30px; font-weight: 600; }
 </style>
 </head> 
 
@@ -105,8 +110,10 @@ body {
 
 <header class="header glass-panel">
   <h1>العُبودي TV</h1>
-  <div class="subtitle">بث مباشر سحابي فائق السرعة ومحمي</div>
-  <a href="https://t.me/stlaet1" class="telegram-link" target="_blank">تابعونا على التلكرام</a>
+  <div class="subtitle">بث مباشر فائق السرعة ومستقر</div>
+  <a href="https://t.me/stlaet1" class="telegram-link" target="_blank">
+    <span>تابعونا على التلكرام</span>
+  </a>
 </header> 
 
 <section id="player-container" class="player-section glass-panel">
@@ -118,94 +125,80 @@ body {
   <div class="servers-container" id="servers-list"></div>
 </section>
 
-<div class="categories-bar" id="categories-bar"></div>
+<div class="categories-bar" id="categories-bar">
+  <div class="loading-text">جاري جلب الباقات...</div>
+</div>
 
 <section class="channels-section glass-panel">
-  <div class="channels-grid" id="channels"></div>
+  <div class="channels-grid" id="channels">
+    <div class="loading-text" style="grid-column: 1 / -1;">اختر باقة لعرض القنوات</div>
+  </div>
 </section>
 
 <script>
 const PROXY_WORKER = "https://yacine-proxy.hsinnzaer5.workers.dev";
-const CLIENT_TOKEN = "Aboody_VIP_2026";
-
-const OFFLINE_CATEGORIES = [
-  {
-    id: "bein",
-    name: "beIN SPORTS",
-    channels: [
-      { id: 1, name: "beIN SPORTS 1" },
-      { id: 2, name: "beIN SPORTS 2" },
-      { id: 3, name: "beIN SPORTS 3" },
-      { id: 4, name: "beIN SPORTS 4" },
-      { id: 5, name: "beIN SPORTS 5" },
-      { id: 6, name: "beIN SPORTS 6" },
-      { id: 7, name: "beIN SPORTS 7" },
-      { id: 8, name: "beIN SPORTS 8" },
-      { id: 9, name: "beIN SPORTS 9" },
-      { id: 10, name: "beIN SPORTS XTRA 1" },
-      { id: 11, name: "beIN SPORTS XTRA 2" }
-    ]
-  },
-  {
-    id: "ssc",
-    name: "SSC SPORTS",
-    channels: [
-      { id: 21, name: "SSC 1 HD" },
-      { id: 22, name: "SSC 2 HD" },
-      { id: 23, name: "SSC 3 HD" },
-      { id: 24, name: "SSC 4 HD" },
-      { id: 25, name: "SSC 5 HD" }
-    ]
-  },
-  {
-    id: "alkass",
-    name: "قنوات الكأس",
-    channels: [
-      { id: 31, name: "Alkass ONE HD" },
-      { id: 32, name: "Alkass TWO HD" },
-      { id: 33, name: "Alkass THREE HD" },
-      { id: 34, name: "Alkass FOUR HD" }
-    ]
-  }
-];
-
 let artInstance = null;
 let currentHls = null;
 
-function loadStaticCategories() {
+async function fetchCategories() {
   const catBar = document.getElementById("categories-bar");
-  catBar.innerHTML = "";
+  try {
+    const res = await fetch(`${PROXY_WORKER}/api/categories`);
+    const data = await res.json();
+    const categories = Array.isArray(data) ? data : (data.categories || data.data || []);
 
-  OFFLINE_CATEGORIES.forEach((cat, index) => {
-    const btn = document.createElement("button");
-    btn.className = `cat-btn ${index === 0 ? 'active' : ''}`;
-    btn.textContent = cat.name;
-    btn.onclick = () => {
-      document.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      renderChannels(cat.channels);
-    };
-    catBar.appendChild(btn);
-  });
+    if (categories.length === 0) throw new Error("لم يتم العثور على باقات");
 
-  renderChannels(OFFLINE_CATEGORIES[0].channels);
+    catBar.innerHTML = "";
+    categories.forEach((cat, index) => {
+      const btn = document.createElement("button");
+      btn.className = `cat-btn ${index === 0 ? 'active' : ''}`;
+      btn.textContent = cat.name || cat.title || `باقة ${cat.id}`;
+      btn.onclick = () => {
+        document.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        fetchChannels(cat.id);
+      };
+      catBar.appendChild(btn);
+    });
+
+    if (categories.length > 0) {
+      fetchChannels(categories[0].id);
+    }
+  } catch (err) {
+    catBar.innerHTML = `<div class="loading-text">⚠️ تعذر تحميل الأقسام: ${err.message}</div>`;
+  }
 }
 
-function renderChannels(channels) {
+async function fetchChannels(categoryId) {
   const grid = document.getElementById("channels");
-  grid.innerHTML = "";
+  grid.innerHTML = `<div class="loading-text" style="grid-column: 1 / -1;">جاري جلب قنوات الباقة...</div>`;
 
-  channels.forEach(channel => {
-    const card = document.createElement("div");
-    card.className = "channel-card";
-    card.textContent = channel.name;
-    card.onclick = () => {
-      document.querySelectorAll(".channel-card").forEach(c => c.classList.remove("active-stream"));
-      card.classList.add("active-stream");
-      loadChannel(channel.id, channel.name);
-    };
-    grid.appendChild(card);
-  });
+  try {
+    const res = await fetch(`${PROXY_WORKER}/api/category/${categoryId}`);
+    const data = await res.json();
+    const channels = Array.isArray(data) ? data : (data.channels || data.data || []);
+
+    if (channels.length === 0) {
+      grid.innerHTML = `<div class="loading-text" style="grid-column: 1 / -1;">لا توجد قنوات متاحة في هذه الباقة</div>`;
+      return;
+    }
+
+    grid.innerHTML = "";
+    channels.forEach(ch => {
+      const card = document.createElement("div");
+      card.className = "channel-card";
+      card.textContent = ch.name || ch.title;
+      card.onclick = () => {
+        document.querySelectorAll(".channel-card").forEach(c => c.classList.remove("active-stream"));
+        card.classList.add("active-stream");
+        loadChannel(ch.id, ch.name || ch.title);
+      };
+      grid.appendChild(card);
+    });
+  } catch (err) {
+    grid.innerHTML = `<div class="loading-text" style="grid-column: 1 / -1;">⚠️ تعذر تحميل القنوات: ${err.message}</div>`;
+  }
 }
 
 async function loadChannel(channelId, channelName) {
@@ -214,7 +207,7 @@ async function loadChannel(channelId, channelName) {
   const serversDiv = document.getElementById("servers-list");
 
   container.style.display = "block";
-  title.textContent = `جاري الاتصال بـ: ${channelName}...`;
+  title.textContent = `جاري تجهيز سيرفرات: ${channelName}...`;
   serversDiv.innerHTML = "";
   container.scrollIntoView({ behavior: "smooth" });
 
@@ -235,12 +228,18 @@ async function loadChannel(channelId, channelName) {
 
     title.textContent = `🔴 بث مباشر: ${channelName}`;
 
+    let defaultIndex = 0;
+    streamList.forEach((st, idx) => {
+      const name = (st.name || st.quality || '').toLowerCase();
+      if (name.includes('720') || name.includes('sd')) defaultIndex = idx;
+    });
+
     streamList.forEach((st, idx) => {
       const targetUrl = st.url || st.stream_url;
       if (!targetUrl) return;
 
       const btn = document.createElement("button");
-      btn.className = `server-btn ${idx === 0 ? 'active' : ''}`;
+      btn.className = `server-btn ${idx === defaultIndex ? 'active' : ''}`;
       btn.textContent = st.name || st.quality || `سيرفر ${idx + 1}`;
       btn.onclick = () => {
         document.querySelectorAll(".server-btn").forEach(b => b.classList.remove("active"));
@@ -250,7 +249,7 @@ async function loadChannel(channelId, channelName) {
       serversDiv.appendChild(btn);
     });
 
-    const firstUrl = streamList[0].url || streamList[0].stream_url;
+    const firstUrl = streamList[defaultIndex].url || streamList[defaultIndex].stream_url;
     if (firstUrl) startArtPlayer(firstUrl);
 
   } catch (err) {
@@ -259,7 +258,7 @@ async function loadChannel(channelId, channelName) {
 }
 
 function startArtPlayer(rawUrl) {
-  const proxiedStreamUrl = `${PROXY_WORKER}?stream=${encodeURIComponent(rawUrl)}&token=${CLIENT_TOKEN}`;
+  const proxiedStreamUrl = `${PROXY_WORKER}?stream=${encodeURIComponent(rawUrl)}`;
 
   if (currentHls) {
     currentHls.stopLoad();
@@ -289,11 +288,14 @@ function startArtPlayer(rawUrl) {
     autoplay: true,
     fullscreen: true,
     fullscreenWeb: true,
+    playsInline: true,
     customType: {
       m3u8: function (video, url) {
         if (Hls.isSupported()) {
           const hls = new Hls({
             enableWorker: true,
+            lowLatencyMode: false,
+            liveSyncDurationCount: 3,
             maxBufferLength: 8,
             maxMaxBufferLength: 16
           });
@@ -341,7 +343,7 @@ function closePlayer() {
   document.querySelectorAll(".channel-card").forEach(c => c.classList.remove("active-stream"));
 }
 
-document.addEventListener("DOMContentLoaded", loadStaticCategories);
+document.addEventListener("DOMContentLoaded", fetchCategories);
 </script>
 </body>
 </html>
