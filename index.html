@@ -16,6 +16,7 @@
 :root {
   --primary: #4361ee;
   --accent: #f72585;
+  --ent-color: #7209b7;
   --glass-bg: rgba(255, 255, 255, 0.08);
   --glass-border: rgba(255, 255, 255, 0.15);
   --blur: blur(16px);
@@ -86,8 +87,18 @@ body {
   font-family: 'Cairo';
   font-weight: 700;
   font-size: 0.85rem;
+  transition: all 0.2s ease;
 }
 .cat-btn.active { background: var(--accent); border-color: var(--accent); }
+
+/* زر الترفيه المميز */
+.cat-btn.entertainment-btn {
+  background: linear-gradient(135deg, #7209b7, #f72585);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+.cat-btn.entertainment-btn.active {
+  box-shadow: 0 0 15px rgba(247, 37, 133, 0.6);
+}
 
 .channels-section { padding: 12px; min-height: 200px; }
 .channels-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
@@ -103,6 +114,23 @@ body {
 .channel-card.active-stream { background: rgba(247, 37, 133, 0.3); border-color: var(--accent); }
 .close-btn { background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.2); color: white; padding: 4px 10px; border-radius: 8px; cursor: pointer; font-family: 'Cairo'; }
 .loading-text { text-align: center; padding: 30px; font-weight: 600; }
+
+/* قسم عرض الترفيه (سينما البصري) داخل الموقع */
+#entertainment-view {
+  display: none;
+  width: 100%;
+  height: 80vh;
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 15px;
+  padding: 4px;
+}
+#entertainment-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 12px;
+}
 </style>
 </head> 
 
@@ -110,7 +138,7 @@ body {
 
 <header class="header glass-panel">
   <h1>العُبودي TV</h1>
-  <div class="subtitle">بث مباشر فائق السرعة ومستقر</div>
+  <div class="subtitle">بث مباشر وسينما ترفيهية متكاملة</div>
   <a href="https://t.me/stlaet1" class="telegram-link" target="_blank">
     <span>تابعونا على التلكرام</span>
   </a>
@@ -129,7 +157,11 @@ body {
   <div class="loading-text">جاري جلب الباقات...</div>
 </div>
 
-<section class="channels-section glass-panel">
+<section id="entertainment-view" class="glass-panel">
+  <iframe id="entertainment-iframe" src="" allowfullscreen loading="lazy"></iframe>
+</section>
+
+<section id="channels-section" class="channels-section glass-panel">
   <div class="channels-grid" id="channels">
     <div class="loading-text" style="grid-column: 1 / -1;">اختر باقة لعرض القنوات</div>
   </div>
@@ -137,6 +169,8 @@ body {
 
 <script>
 const PROXY_WORKER = "https://yacine-proxy.hsinnzaer5.workers.dev";
+const CINEMA_URL = "https://albasritv.github.io/albasri-cinema.html";
+
 let artInstance = null;
 let currentHls = null;
 
@@ -151,24 +185,61 @@ async function fetchCategories() {
     if (categories.length === 0) throw new Error("لم يتم العثور على باقات");
 
     catBar.innerHTML = "";
-    categories.forEach((cat, index) => {
+
+    // 1. إضافة زر الترفيه الثابت في البداية (يعمل بشكل منفصل وبدون استهلاك للوركر)
+    const entBtn = document.createElement("button");
+    entBtn.className = "cat-btn entertainment-btn";
+    entBtn.innerHTML = "🍿 ترفيه";
+    entBtn.onclick = () => {
+      document.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("active"));
+      entBtn.classList.add("active");
+      openEntertainment();
+    };
+    catBar.appendChild(entBtn);
+
+    // 2. إضافة باقي الباقات الحية
+    categories.forEach((cat) => {
       const btn = document.createElement("button");
-      btn.className = `cat-btn ${index === 0 ? 'active' : ''}`;
+      btn.className = "cat-btn";
       btn.textContent = cat.name || cat.title || `باقة ${cat.id}`;
       btn.onclick = () => {
         document.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
+        showChannelsView();
         fetchChannels(cat.id);
       };
       catBar.appendChild(btn);
     });
 
+    // فتح الباقة الأولى افتراضياً
     if (categories.length > 0) {
+      const firstCatBtn = catBar.children[1];
+      if (firstCatBtn) firstCatBtn.classList.add("active");
       fetchChannels(categories[0].id);
     }
   } catch (err) {
     catBar.innerHTML = `<div class="loading-text">⚠️ تعذر تحميل الأقسام: ${err.message}</div>`;
   }
+}
+
+// عرض واجهة الترفيه الداخلية
+function openEntertainment() {
+  closePlayer();
+  document.getElementById("channels-section").style.display = "none";
+  const entView = document.getElementById("entertainment-view");
+  const iframe = document.getElementById("entertainment-iframe");
+  
+  if (!iframe.src || iframe.src === "about:blank" || iframe.src === window.location.href) {
+    iframe.src = CINEMA_URL;
+  }
+  entView.style.display = "block";
+  entView.scrollIntoView({ behavior: "smooth" });
+}
+
+// العودة إلى وضع القنوات
+function showChannelsView() {
+  document.getElementById("entertainment-view").style.display = "none";
+  document.getElementById("channels-section").style.display = "block";
 }
 
 async function fetchChannels(categoryId) {
