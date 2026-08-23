@@ -176,7 +176,7 @@ async function fetchChannels(categoryId) {
   grid.innerHTML = `<div class="loading-text" style="grid-column: 1 / -1;">جاري جلب قنوات الباقة...</div>`;
 
   try {
-    const res = await fetch(`${PROXY_WORKER}/api/category/${categoryId}`);
+    const res = await fetch(`${PROXY_WORKER}/api/categories/${categoryId}/channels`);
     const data = await res.json();
     if (data.error) throw new Error(data.message);
 
