@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet"> 
 
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.12/dist/hls.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js"></script>
 
 <style>
@@ -89,7 +89,7 @@ body {
   margin-bottom: 8px;
 }
 
-#artplayer-mount {
+#artplayer-container {
   width: 100%;
   aspect-ratio: 16 / 9;
   border-radius: 12px;
@@ -207,7 +207,7 @@ body {
 
 <header class="header glass-panel">
   <h1>العُبودي TV</h1>
-  <div class="subtitle">بث مباشر فائق السرعة</div>
+  <div class="subtitle">بث مباشر فائق السرعة ومستقر (محمي)</div>
   <a href="https://t.me/stlaet1" class="telegram-link" target="_blank">
     <span>تابعونا على التلكرام</span>
   </a>
@@ -218,159 +218,127 @@ body {
     <h3 id="current-channel-title">اسم القناة</h3>
     <button class="close-btn" onclick="closePlayer()">✕ إغلاق</button>
   </div>
-  <div id="player-wrapper">
-    <div id="artplayer-mount"></div>
-  </div>
+  <div id="artplayer-container"></div>
   <div class="servers-container" id="servers-list"></div>
 </section>
 
 <div class="categories-bar" id="categories-bar"></div>
 
 <section class="channels-section glass-panel">
-  <div class="channels-grid" id="channels">
-    <div class="status-msg">جاري تحميل الأقسام...</div>
-  </div>
+  <div class="channels-grid" id="channels"></div>
 </section>
 
 <script>
-const BACKEND_ENDPOINT = "https://yacine-proxy.hsinnzaer5.workers.dev";
+const PROXY_WORKER = "https://yacine-proxy.hsinnzaer5.workers.dev";
+
+const OFFLINE_CATEGORIES = [
+  {
+    id: "bein",
+    name: "beIN SPORTS",
+    channels: [
+      { id: 1, name: "beIN SPORTS 1" },
+      { id: 2, name: "beIN SPORTS 2" },
+      { id: 3, name: "beIN SPORTS 3" },
+      { id: 4, name: "beIN SPORTS 4" },
+      { id: 5, name: "beIN SPORTS 5" },
+      { id: 6, name: "beIN SPORTS 6" },
+      { id: 7, name: "beIN SPORTS 7" },
+      { id: 8, name: "beIN SPORTS 8" },
+      { id: 9, name: "beIN SPORTS 9" },
+      { id: 10, name: "beIN SPORTS XTRA 1" },
+      { id: 11, name: "beIN SPORTS XTRA 2" }
+    ]
+  },
+  {
+    id: "ssc",
+    name: "SSC SPORTS",
+    channels: [
+      { id: 21, name: "SSC 1 HD" },
+      { id: 22, name: "SSC 2 HD" },
+      { id: 23, name: "SSC 3 HD" },
+      { id: 24, name: "SSC 4 HD" },
+      { id: 25, name: "SSC 5 HD" },
+      { id: 26, name: "SSC EXTRA 1" }
+    ]
+  },
+  {
+    id: "alkass",
+    name: "قنوات الكأس",
+    channels: [
+      { id: 31, name: "Alkass ONE HD" },
+      { id: 32, name: "Alkass TWO HD" },
+      { id: 33, name: "Alkass THREE HD" },
+      { id: 34, name: "Alkass FOUR HD" }
+    ]
+  },
+  {
+    id: "arab",
+    name: "قنوات عربية متنوعة",
+    channels: [
+      { id: 41, name: "MBC 1" },
+      { id: 42, name: "MBC Masr" },
+      { id: 43, name: "Abu Dhabi Sports 1" },
+      { id: 44, name: "Abu Dhabi Sports 2" },
+      { id: 45, name: "Dubai Sports 1" }
+    ]
+  }
+];
 
 let artInstance = null;
 let currentHls = null;
 
-function forceStopAndClean() {
-  if (currentHls) {
-    try {
-      currentHls.stopLoad();
-      currentHls.detachMedia();
-      currentHls.destroy();
-    } catch (e) {}
-    currentHls = null;
-  }
+function loadStaticCategories() {
+  const catBar = document.getElementById("categories-bar");
+  catBar.innerHTML = "";
 
-  const videos = document.querySelectorAll('video');
-  videos.forEach(v => {
-    try {
-      v.pause();
-      v.muted = true;
-      v.removeAttribute('src');
-      v.srcObject = null;
-      v.load();
-      v.remove();
-    } catch (e) {}
+  OFFLINE_CATEGORIES.forEach((cat, index) => {
+    const btn = document.createElement("button");
+    btn.className = `cat-btn ${index === 0 ? 'active' : ''}`;
+    btn.textContent = cat.name;
+    btn.onclick = () => {
+      document.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      btn.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+      renderChannels(cat.channels);
+    };
+    catBar.appendChild(btn);
   });
 
-  if (artInstance) {
-    try {
-      artInstance.destroy(true);
-    } catch (e) {}
-    artInstance = null;
-  }
-
-  const wrapper = document.getElementById('player-wrapper');
-  if (wrapper) {
-    wrapper.innerHTML = '<div id="artplayer-mount"></div>';
-  }
+  renderChannels(OFFLINE_CATEGORIES[0].channels);
 }
 
-async function fetchFromBackend(path) {
-  const res = await fetch(`${BACKEND_ENDPOINT}${path}`);
-  if (!res.ok) throw new Error(`Status: ${res.status}`);
-  return await res.json();
-}
-
-async function loadCategories() {
-  const catBar = document.getElementById("categories-bar");
+function renderChannels(channels) {
   const channelsGrid = document.getElementById("channels");
-
-  try {
-    const res = await fetchFromBackend("/api/categories");
-    catBar.innerHTML = "";
-
-    const list = Array.isArray(res) ? res : (res.data || []);
-
-    list.forEach((cat, index) => {
-      const btn = document.createElement("button");
-      btn.className = `cat-btn ${index === 0 ? 'active' : ''}`;
-      btn.textContent = cat.name || cat.title;
-      btn.onclick = () => {
-        document.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        btn.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-        loadChannelsByCategory(cat.id);
-      };
-      catBar.appendChild(btn);
-    });
-
-    if (list.length > 0) {
-      loadChannelsByCategory(list[0].id);
-    }
-  } catch (err) {
-    channelsGrid.innerHTML = `<div class="status-msg">⚠️ تعذر تحميل الأقسام: ${err.message}</div>`;
-  }
-}
-
-async function loadChannelsByCategory(catId) {
-  const channelsGrid = document.getElementById("channels");
-  channelsGrid.innerHTML = `<div class="status-msg">جاري جلب القنوات...</div>`;
-
-  const endpoints = [
-    `/api/categories/${catId}/channels`,
-    `/api/category/${catId}/channels`,
-    `/api/channels?category_id=${catId}`,
-    `/api/channels/${catId}`
-  ];
-
-  let channels = [];
-  for (const ep of endpoints) {
-    try {
-      const res = await fetchFromBackend(ep);
-      const extracted = Array.isArray(res) ? res : (res.data || []);
-      if (Array.isArray(extracted) && extracted.length > 0) {
-        channels = extracted;
-        break;
-      }
-    } catch (e) {}
-  }
-
   channelsGrid.innerHTML = "";
-
-  if (!channels || channels.length === 0) {
-    channelsGrid.innerHTML = `<div class="status-msg">لا توجد قنوات متاحة في هذا القسم.</div>`;
-    return;
-  }
 
   channels.forEach(channel => {
     const card = document.createElement("div");
     card.className = "channel-card";
-    card.textContent = channel.name || channel.title;
+    card.textContent = channel.name;
     card.onclick = () => {
       document.querySelectorAll(".channel-card").forEach(c => c.classList.remove("active-stream"));
       card.classList.add("active-stream");
-      loadChannelStreams(channel.id, channel.name || channel.title);
+      loadChannel(channel.id, channel.name);
     };
     channelsGrid.appendChild(card);
   });
 }
 
-async function loadChannelStreams(channelId, channelName) {
+async function loadChannel(channelId, channelName) {
   const container = document.getElementById("player-container");
   const title = document.getElementById("current-channel-title");
   const serversDiv = document.getElementById("servers-list");
 
-  forceStopAndClean();
-
   container.style.display = "block";
-  title.textContent = `جاري تجهيز سيرفرات: ${channelName}...`;
+  title.textContent = `🔴 بث مباشر: ${channelName}`;
   serversDiv.innerHTML = "";
   container.scrollIntoView({ behavior: "smooth" });
 
   try {
-    const data = await fetchFromBackend(`/api/channel/${channelId}`);
-    title.textContent = `🔴 بث مباشر: ${channelName}`;
+    const res = await fetch(`${PROXY_WORKER}/api/channel/${channelId}`);
+    const data = await res.json();
 
     let streamList = [];
-
     if (Array.isArray(data)) {
       streamList = data;
     } else if (data.data && Array.isArray(data.data)) {
@@ -379,7 +347,7 @@ async function loadChannelStreams(channelId, channelName) {
       streamList = [{ name: "السيرفر الرئيسي", url: data.url || data.stream_url }];
     }
 
-    if (streamList.length === 0) throw new Error("لم يتم العثور على سيرفرات للبث");
+    if (streamList.length === 0) throw new Error("سيرفرات البث غير متاحة حالياً");
 
     streamList.forEach((st, idx) => {
       const targetUrl = st.url || st.stream_url;
@@ -404,18 +372,43 @@ async function loadChannelStreams(channelId, channelName) {
   }
 }
 
-function startArtPlayer(rawUrl) {
-  forceStopAndClean();
+async function startArtPlayer(rawUrl) {
+  // طلب توكن مشفر ومؤقت من الوركر لمنع السرقة
+  let signedStreamUrl = "";
+  try {
+    const tokenRes = await fetch(`${PROXY_WORKER}/api/token?target=${encodeURIComponent(rawUrl)}`);
+    const tokenData = await tokenRes.json();
+    signedStreamUrl = tokenData.url;
+  } catch (e) {
+    signedStreamUrl = `${PROXY_WORKER}?stream=${encodeURIComponent(rawUrl)}`;
+  }
 
-  const proxiedStreamUrl = `${BACKEND_ENDPOINT}?stream=${encodeURIComponent(rawUrl)}`;
+  if (currentHls) {
+    currentHls.stopLoad();
+    currentHls.detachMedia();
+    currentHls.destroy();
+    currentHls = null;
+  }
+
+  if (artInstance) {
+    if (artInstance.video) {
+      artInstance.video.pause();
+      artInstance.video.removeAttribute('src');
+      artInstance.video.load();
+    }
+    artInstance.destroy(true);
+    artInstance = null;
+  }
+
+  const container = document.getElementById('artplayer-container');
+  container.innerHTML = "";
 
   artInstance = new Artplayer({
-    container: '#artplayer-mount',
-    url: proxiedStreamUrl,
+    container: '#artplayer-container',
+    url: signedStreamUrl,
     type: 'm3u8',
     isLive: true,
     autoplay: true,
-    autoMini: true,
     fullscreen: true,
     fullscreenWeb: true,
     playsInline: true,
@@ -425,45 +418,26 @@ function startArtPlayer(rawUrl) {
           const hls = new Hls({
             enableWorker: true,
             lowLatencyMode: false,
-            maxBufferLength: 8,
-            maxMaxBufferLength: 15,
             liveSyncDurationCount: 3,
-            liveMaxLatencyDurationCount: 6,
-            maxBufferHole: 0.1,
-            highBufferWatchdogPeriod: 2,
-            nudgeOffset: 0.1,
-            nudgeMaxRetry: 5,
-            enableSoftwareAES: true,
-            manifestLoadingTimeOut: 10000,
-            manifestLoadingMaxRetry: 3,
-            levelLoadingTimeOut: 10000,
-            fragLoadingTimeOut: 20000,
+            maxBufferLength: 8,
+            maxMaxBufferLength: 16
           });
 
           hls.loadSource(url);
           hls.attachMedia(video);
+          currentHls = hls;
 
           hls.on(Hls.Events.ERROR, function (event, data) {
             if (data.fatal) {
-              switch (data.type) {
-                case Hls.ErrorTypes.MEDIA_ERROR:
-                  hls.recoverMediaError();
-                  break;
-                case Hls.ErrorTypes.NETWORK_ERROR:
-                  hls.startLoad();
-                  break;
-                default:
-                  forceStopAndClean();
-                  break;
-              }
-            } else if (data.details === Hls.ErrorDetails.BUFFER_STALLED_ERROR) {
-              if (video.buffered.length > 0) {
-                video.currentTime = video.buffered.end(video.buffered.length - 1) - 0.5;
+              if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                hls.startLoad();
+              } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+                hls.recoverMediaError();
+              } else {
+                hls.destroy();
               }
             }
           });
-
-          currentHls = hls;
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
           video.src = url;
         }
@@ -473,12 +447,29 @@ function startArtPlayer(rawUrl) {
 }
 
 function closePlayer() {
-  forceStopAndClean();
+  if (currentHls) {
+    currentHls.stopLoad();
+    currentHls.detachMedia();
+    currentHls.destroy();
+    currentHls = null;
+  }
+  if (artInstance) {
+    if (artInstance.video) {
+      artInstance.video.pause();
+      artInstance.video.removeAttribute('src');
+      artInstance.video.load();
+    }
+    artInstance.destroy(true);
+    artInstance = null;
+  }
+  const container = document.getElementById('artplayer-container');
+  if (container) container.innerHTML = "";
+  
   document.getElementById("player-container").style.display = "none";
   document.querySelectorAll(".channel-card").forEach(c => c.classList.remove("active-stream"));
 }
 
-document.addEventListener("DOMContentLoaded", loadCategories);
+document.addEventListener("DOMContentLoaded", loadStaticCategories);
 </script>
 </body>
 </html>
