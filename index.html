@@ -21,13 +21,7 @@
   --blur: blur(16px);
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
-}
-
+* { margin: 0; padding: 0; box-sizing: border-box; }
 body {
   font-family: 'Cairo', sans-serif;
   background: linear-gradient(135deg, #1f1c2c 0%, #928dab 100%);
@@ -45,23 +39,9 @@ body {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
-.header {
-  text-align: center;
-  padding: 15px;
-  margin-bottom: 12px;
-}
-
-.header h1 {
-  font-size: 1.8rem;
-  font-weight: 800;
-  margin-bottom: 4px;
-}
-
-.subtitle {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 0.85rem;
-}
-
+.header { text-align: center; padding: 15px; margin-bottom: 12px; }
+.header h1 { font-size: 1.8rem; font-weight: 800; }
+.subtitle { color: rgba(255, 255, 255, 0.8); font-size: 0.85rem; }
 .telegram-link {
   margin-top: 10px;
   display: inline-flex;
@@ -76,34 +56,10 @@ body {
   font-weight: 600;
 }
 
-.player-section {
-  margin-bottom: 15px;
-  padding: 12px;
-  display: none;
-}
-
-.player-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-#artplayer-container {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #000;
-}
-
-.servers-container {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-top: 10px;
-}
-
+.player-section { margin-bottom: 15px; padding: 12px; display: none; }
+.player-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+#artplayer-container { width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #000; }
+.servers-container { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
 .server-btn {
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.25);
@@ -111,59 +67,26 @@ body {
   padding: 5px 12px;
   border-radius: 8px;
   cursor: pointer;
-  font-family: 'Cairo', sans-serif;
+  font-family: 'Cairo';
   font-size: 0.8rem;
-  font-weight: 600;
 }
+.server-btn.active { background: var(--accent); border-color: var(--accent); }
 
-.server-btn.active {
-  background: var(--accent);
-  border-color: var(--accent);
-}
-
-.categories-bar {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  white-space: nowrap;
-  padding: 8px 4px;
-  margin-bottom: 15px;
-  scrollbar-width: none;
-}
-
-.categories-bar::-webkit-scrollbar {
-  display: none;
-}
-
+.categories-bar { display: flex; gap: 8px; overflow-x: auto; white-space: nowrap; padding: 8px 4px; margin-bottom: 15px; }
 .cat-btn {
-  display: inline-block;
-  flex: 0 0 auto;
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: white;
   padding: 8px 16px;
   border-radius: 20px;
   cursor: pointer;
-  font-family: 'Cairo', sans-serif;
+  font-family: 'Cairo';
   font-weight: 700;
-  font-size: 0.85rem;
 }
+.cat-btn.active { background: var(--accent); }
 
-.cat-btn.active {
-  background: var(--accent);
-  border-color: var(--accent);
-}
-
-.channels-section {
-  padding: 12px;
-}
-
-.channels-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 10px;
-}
-
+.channels-section { padding: 12px; }
+.channels-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
 .channel-card {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -172,34 +95,9 @@ body {
   cursor: pointer;
   text-align: center;
   font-weight: 700;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 70px;
 }
-
-.channel-card.active-stream {
-  background: rgba(247, 37, 133, 0.3);
-  border-color: var(--accent);
-}
-
-.close-btn {
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
-  padding: 4px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-family: 'Cairo', sans-serif;
-}
-
-.status-msg {
-  text-align: center;
-  padding: 25px;
-  grid-column: 1 / -1;
-  font-size: 0.9rem;
-}
+.channel-card.active-stream { background: rgba(247, 37, 133, 0.3); border-color: var(--accent); }
+.close-btn { background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.2); color: white; padding: 4px 10px; border-radius: 8px; cursor: pointer; }
 </style>
 </head> 
 
@@ -207,10 +105,8 @@ body {
 
 <header class="header glass-panel">
   <h1>العُبودي TV</h1>
-  <div class="subtitle">بث مباشر فائق السرعة ومستقر (محمي)</div>
-  <a href="https://t.me/stlaet1" class="telegram-link" target="_blank">
-    <span>تابعونا على التلكرام</span>
-  </a>
+  <div class="subtitle">بث مباشر سحابي فائق السرعة ومحمي</div>
+  <a href="https://t.me/stlaet1" class="telegram-link" target="_blank">تابعونا على التلكرام</a>
 </header> 
 
 <section id="player-container" class="player-section glass-panel">
@@ -230,6 +126,7 @@ body {
 
 <script>
 const PROXY_WORKER = "https://yacine-proxy.hsinnzaer5.workers.dev";
+const CLIENT_TOKEN = "Aboody_VIP_2026";
 
 const OFFLINE_CATEGORIES = [
   {
@@ -257,8 +154,7 @@ const OFFLINE_CATEGORIES = [
       { id: 22, name: "SSC 2 HD" },
       { id: 23, name: "SSC 3 HD" },
       { id: 24, name: "SSC 4 HD" },
-      { id: 25, name: "SSC 5 HD" },
-      { id: 26, name: "SSC EXTRA 1" }
+      { id: 25, name: "SSC 5 HD" }
     ]
   },
   {
@@ -269,17 +165,6 @@ const OFFLINE_CATEGORIES = [
       { id: 32, name: "Alkass TWO HD" },
       { id: 33, name: "Alkass THREE HD" },
       { id: 34, name: "Alkass FOUR HD" }
-    ]
-  },
-  {
-    id: "arab",
-    name: "قنوات عربية متنوعة",
-    channels: [
-      { id: 41, name: "MBC 1" },
-      { id: 42, name: "MBC Masr" },
-      { id: 43, name: "Abu Dhabi Sports 1" },
-      { id: 44, name: "Abu Dhabi Sports 2" },
-      { id: 45, name: "Dubai Sports 1" }
     ]
   }
 ];
@@ -298,7 +183,6 @@ function loadStaticCategories() {
     btn.onclick = () => {
       document.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
-      btn.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
       renderChannels(cat.channels);
     };
     catBar.appendChild(btn);
@@ -308,8 +192,8 @@ function loadStaticCategories() {
 }
 
 function renderChannels(channels) {
-  const channelsGrid = document.getElementById("channels");
-  channelsGrid.innerHTML = "";
+  const grid = document.getElementById("channels");
+  grid.innerHTML = "";
 
   channels.forEach(channel => {
     const card = document.createElement("div");
@@ -320,7 +204,7 @@ function renderChannels(channels) {
       card.classList.add("active-stream");
       loadChannel(channel.id, channel.name);
     };
-    channelsGrid.appendChild(card);
+    grid.appendChild(card);
   });
 }
 
@@ -330,7 +214,7 @@ async function loadChannel(channelId, channelName) {
   const serversDiv = document.getElementById("servers-list");
 
   container.style.display = "block";
-  title.textContent = `🔴 بث مباشر: ${channelName}`;
+  title.textContent = `جاري الاتصال بـ: ${channelName}...`;
   serversDiv.innerHTML = "";
   container.scrollIntoView({ behavior: "smooth" });
 
@@ -347,7 +231,9 @@ async function loadChannel(channelId, channelName) {
       streamList = [{ name: "السيرفر الرئيسي", url: data.url || data.stream_url }];
     }
 
-    if (streamList.length === 0) throw new Error("سيرفرات البث غير متاحة حالياً");
+    if (streamList.length === 0) throw new Error("السيرفرات غير متوفرة حالياً");
+
+    title.textContent = `🔴 بث مباشر: ${channelName}`;
 
     streamList.forEach((st, idx) => {
       const targetUrl = st.url || st.stream_url;
@@ -372,16 +258,8 @@ async function loadChannel(channelId, channelName) {
   }
 }
 
-async function startArtPlayer(rawUrl) {
-  // طلب توكن مشفر ومؤقت من الوركر لمنع السرقة
-  let signedStreamUrl = "";
-  try {
-    const tokenRes = await fetch(`${PROXY_WORKER}/api/token?target=${encodeURIComponent(rawUrl)}`);
-    const tokenData = await tokenRes.json();
-    signedStreamUrl = tokenData.url;
-  } catch (e) {
-    signedStreamUrl = `${PROXY_WORKER}?stream=${encodeURIComponent(rawUrl)}`;
-  }
+function startArtPlayer(rawUrl) {
+  const proxiedStreamUrl = `${PROXY_WORKER}?stream=${encodeURIComponent(rawUrl)}&token=${CLIENT_TOKEN}`;
 
   if (currentHls) {
     currentHls.stopLoad();
@@ -405,20 +283,17 @@ async function startArtPlayer(rawUrl) {
 
   artInstance = new Artplayer({
     container: '#artplayer-container',
-    url: signedStreamUrl,
+    url: proxiedStreamUrl,
     type: 'm3u8',
     isLive: true,
     autoplay: true,
     fullscreen: true,
     fullscreenWeb: true,
-    playsInline: true,
     customType: {
       m3u8: function (video, url) {
         if (Hls.isSupported()) {
           const hls = new Hls({
             enableWorker: true,
-            lowLatencyMode: false,
-            liveSyncDurationCount: 3,
             maxBufferLength: 8,
             maxMaxBufferLength: 16
           });
@@ -462,9 +337,6 @@ function closePlayer() {
     artInstance.destroy(true);
     artInstance = null;
   }
-  const container = document.getElementById('artplayer-container');
-  if (container) container.innerHTML = "";
-  
   document.getElementById("player-container").style.display = "none";
   document.querySelectorAll(".channel-card").forEach(c => c.classList.remove("active-stream"));
 }
