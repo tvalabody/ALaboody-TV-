@@ -145,8 +145,9 @@ async function fetchCategories() {
   try {
     const res = await fetch(`${PROXY_WORKER}/api/categories`);
     const data = await res.json();
-    const categories = Array.isArray(data) ? data : (data.categories || data.data || []);
+    if (data.error) throw new Error(data.message);
 
+    const categories = Array.isArray(data) ? data : (data.categories || data.data || []);
     if (categories.length === 0) throw new Error("لم يتم العثور على باقات");
 
     catBar.innerHTML = "";
@@ -177,8 +178,9 @@ async function fetchChannels(categoryId) {
   try {
     const res = await fetch(`${PROXY_WORKER}/api/category/${categoryId}`);
     const data = await res.json();
-    const channels = Array.isArray(data) ? data : (data.channels || data.data || []);
+    if (data.error) throw new Error(data.message);
 
+    const channels = Array.isArray(data) ? data : (data.channels || data.data || []);
     if (channels.length === 0) {
       grid.innerHTML = `<div class="loading-text" style="grid-column: 1 / -1;">لا توجد قنوات متاحة في هذه الباقة</div>`;
       return;
@@ -214,6 +216,7 @@ async function loadChannel(channelId, channelName) {
   try {
     const res = await fetch(`${PROXY_WORKER}/api/channel/${channelId}`);
     const data = await res.json();
+    if (data.error) throw new Error(data.message);
 
     let streamList = [];
     if (Array.isArray(data)) {
