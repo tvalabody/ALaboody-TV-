@@ -2,422 +2,1290 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>📺 العُبودي TV</title> 
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#070b14">
+<meta name="color-scheme" content="dark">
+<title>العُبودي TV — بث مباشر وجدول المباريات والترفيه و VIP</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet"> 
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
+<!-- مشغلات الفيديو -->
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.12/dist/hls.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ovenplayer/dist/ovenplayer.js"></script>
 
 <style>
-:root {
-  --primary: #4361ee;
-  --accent: #f72585;
-  --ent-color: #7209b7;
-  --glass-bg: rgba(255, 255, 255, 0.08);
-  --glass-border: rgba(255, 255, 255, 0.15);
-  --blur: blur(16px);
+/* ============================================================
+   1) المتغيرات والتنسيق العام
+   ============================================================ */
+:root{
+  --bg:#070b14;
+  --bg-soft:#0c1220;
+  --surface:rgba(255,255,255,.045);
+  --surface-solid:#121a2c;
+  --surface-2:#172033;
+  --line:rgba(255,255,255,.09);
+  --line-soft:rgba(255,255,255,.06);
+
+  --primary:#17d9f4;
+  --primary-2:#3b82f6;
+  --live:#ff3b5c;
+  --live-2:#ff7a45;
+  --match:#f59e0b;
+  --match-2:#d97706;
+  --vip:#a855f7;
+  --vip-2:#ec4899;
+  --special:#10b981;
+  --special-2:#059669;
+
+  --text:#f4f7fc;
+  --muted:#93a1ba;
+  --muted-2:#5f6d85;
+
+  --r-xl:26px;
+  --r-lg:20px;
+  --r-md:15px;
+  --r-sm:10px;
+
+  --shadow:0 18px 45px rgba(0,0,0,.38);
+  --shadow-sm:0 8px 22px rgba(0,0,0,.25);
+
+  --nav-h:64px;
+  --bottom-nav-h:64px;
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-body {
-  font-family: 'Cairo', sans-serif;
-  background: linear-gradient(135deg, #1f1c2c 0%, #928dab 100%);
-  padding: 12px;
-  min-height: 100vh;
-  color: white;
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+html,body{background:var(--bg);color:var(--text);height:100%}
+body{
+  font-family:'Tajawal',sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+  padding-top:var(--nav-h);
+  padding-bottom:calc(14px + env(safe-area-inset-bottom));
+}
+button,input,a{font:inherit}
+button,a{touch-action:manipulation;cursor:pointer}
+a{text-decoration:none;color:inherit}
+img{max-width:100%;display:block}
+::selection{background:rgba(23,217,244,.35)}
+
+.hscroll{scrollbar-width:none}
+.hscroll::-webkit-scrollbar{display:none}
+.brand-font{font-family:'Cairo',sans-serif}
+
+.app-bg{
+  position:fixed;inset:0;z-index:-1;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(23,217,244,.10), transparent 45%),
+    radial-gradient(circle at 90% 10%, rgba(245,158,11,.08), transparent 50%),
+    radial-gradient(circle at 50% 100%, rgba(255,59,92,.06), transparent 55%),
+    var(--bg);
 }
 
-.glass-panel {
-  background: var(--glass-bg);
-  backdrop-filter: var(--blur);
-  -webkit-backdrop-filter: var(--blur);
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+/* ============================================================
+   2) الشريط العلوي والتنقل
+   ============================================================ */
+.top-nav{
+  position:fixed;top:0;left:0;right:0;z-index:500;
+  height:var(--nav-h);
+  display:flex;align-items:center;
+  background:rgba(7,11,20,.85);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--line-soft);
+}
+.nav-inner{
+  width:min(1180px,100%);margin:0 auto;padding:0 14px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+}
+.brand{display:flex;align-items:center;gap:9px;font-weight:900;font-size:1.05rem;white-space:nowrap}
+.brand .brand-mark{
+  width:34px;height:34px;border-radius:11px;flex:0 0 34px;
+  background:linear-gradient(135deg,var(--primary),var(--primary-2));
+  display:grid;place-items:center;color:#04121a;font-size:16px;
+  box-shadow:0 6px 16px rgba(23,217,244,.35);
+}
+.brand span.dim{color:var(--muted);font-weight:600;font-size:.72rem;display:block}
+
+.main-tabs{
+  display:flex;gap:4px;
+  background:var(--surface-solid);border:1px solid var(--line);
+  border-radius:999px;padding:4px;
+  overflow-x:auto;
+}
+.main-tab{
+  border:0;background:transparent;color:var(--muted);
+  font-weight:800;font-size:.82rem;padding:7px 14px;border-radius:999px;
+  display:flex;align-items:center;gap:6px;transition:.25s ease;
+  white-space:nowrap;
+}
+.main-tab.active[data-tab="live"]{background:linear-gradient(135deg,var(--live),var(--live-2));color:#fff;box-shadow:0 4px 12px rgba(255,59,92,.3)}
+.main-tab.active[data-tab="special"]{background:linear-gradient(135deg,var(--special),var(--special-2));color:#fff;box-shadow:0 4px 12px rgba(16,185,129,.35)}
+.main-tab.active[data-tab="matches"]{background:linear-gradient(135deg,var(--match),var(--match-2));color:#04121a;box-shadow:0 4px 12px rgba(245,158,11,.3)}
+.main-tab.active[data-tab="vip"]{background:linear-gradient(135deg,var(--vip),var(--vip-2));color:#fff;box-shadow:0 4px 12px rgba(168,85,247,.35)}
+.main-tab.active[data-tab="ent"]{background:linear-gradient(135deg,var(--primary),var(--primary-2));color:#04121a;box-shadow:0 4px 12px rgba(23,217,244,.3)}
+
+.nav-live-pulse{
+  width:7px;height:7px;border-radius:50%;background:var(--live);
+  box-shadow:0 0 0 0 rgba(255,59,92,.6);
+  animation:pulseDot 1.8s infinite;
+}
+.nav-special-pulse{
+  width:7px;height:7px;border-radius:50%;background:var(--special);
+  box-shadow:0 0 0 0 rgba(16,185,129,.6);
+  animation:pulseSpecialDot 1.8s infinite;
+}
+@keyframes pulseDot{
+  0%{box-shadow:0 0 0 0 rgba(255,59,92,.55)}
+  70%{box-shadow:0 0 0 8px rgba(255,59,92,0)}
+  100%{box-shadow:0 0 0 0 rgba(255,59,92,0)}
+}
+@keyframes pulseSpecialDot{
+  0%{box-shadow:0 0 0 0 rgba(16,185,129,.55)}
+  70%{box-shadow:0 0 0 8px rgba(16,185,129,0)}
+  100%{box-shadow:0 0 0 0 rgba(16,185,129,0)}
 }
 
-.header { text-align: center; padding: 15px; margin-bottom: 12px; }
-.header h1 { font-size: 1.8rem; font-weight: 800; }
-.subtitle { color: rgba(255, 255, 255, 0.8); font-size: 0.85rem; }
-.telegram-link {
-  margin-top: 10px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: #0088cc;
-  padding: 6px 14px;
-  border-radius: 10px;
-  color: white;
-  text-decoration: none;
-  font-size: 0.85rem;
-  font-weight: 600;
+/* ============================================================
+   3) أقسام التطبيق العامة
+   ============================================================ */
+.app-view{display:none}
+.app-view.active{display:block;animation:viewFade .3s ease both}
+@keyframes viewFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.shell{width:min(1180px,100%);margin:0 auto;padding:16px 14px 30px}
+.glass-panel{
+  background:var(--surface);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-sm);
+}
+.section-title{display:flex;align-items:center;justify-content:space-between;margin:4px 0 13px;gap:10px}
+.section-title h2{font-size:1.05rem;font-weight:900;display:flex;align-items:center;gap:9px}
+.section-title h2::before{content:"";width:4px;height:20px;border-radius:10px;background:linear-gradient(var(--primary),var(--primary-2))}
+.section-title.vip h2::before{background:linear-gradient(var(--vip),var(--vip-2))}
+.section-title.special h2::before{background:linear-gradient(var(--special),var(--special-2))}
+.section-count{font-size:.72rem;color:var(--muted);background:var(--surface-solid);border:1px solid var(--line);padding:5px 10px;border-radius:999px;white-space:nowrap}
+
+/* ============================================================
+   4) البث المباشر والمشترك
+   ============================================================ */
+.live-hero{padding:6px 2px 16px;text-align:center}
+.live-hero h1{font-family:'Cairo',sans-serif;font-size:1.5rem;font-weight:900}
+.live-hero .subtitle{color:var(--muted);font-size:.85rem;margin-top:4px}
+.live-hero .telegram-link{
+  margin-top:12px;display:inline-flex;align-items:center;gap:8px;background:#0088cc;padding:8px 16px;
+  border-radius:12px;color:#fff;font-size:.85rem;font-weight:800;box-shadow:0 8px 18px rgba(0,136,204,.3);
 }
 
-.player-section { margin-bottom: 15px; padding: 12px; display: none; }
-.player-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-#artplayer-container { width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #000; }
-.servers-container { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
-.server-btn {
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  color: white;
-  padding: 5px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-family: 'Cairo';
-  font-size: 0.8rem;
+.live-player-section{margin-bottom:16px;padding:14px;display:none}
+.live-player-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px}
+.live-player-header h3{font-size:.95rem;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:7px}
+#artplayer-container, #special-artplayer-container{width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:#000}
+.live-servers{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+.server-btn{
+  background:var(--surface-solid);border:1px solid var(--line);color:#fff;padding:7px 14px;border-radius:10px;
+  font-weight:700;font-size:.8rem;transition:.2s;
 }
-.server-btn.active { background: var(--accent); border-color: var(--accent); }
+.server-btn.active{background:linear-gradient(135deg,var(--live),var(--live-2));border-color:transparent}
+.close-btn{background:var(--surface-solid);border:1px solid var(--line);color:#fff;padding:7px 13px;border-radius:10px;font-weight:800;font-size:.82rem;flex:0 0 auto;}
 
-.categories-bar { display: flex; gap: 8px; overflow-x: auto; white-space: nowrap; padding: 8px 4px; margin-bottom: 15px; scrollbar-width: none; }
-.categories-bar::-webkit-scrollbar { display: none; }
-.cat-btn {
-  display: inline-block;
-  flex: 0 0 auto;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
-  padding: 8px 16px;
-  border-radius: 20px;
-  cursor: pointer;
-  font-family: 'Cairo';
-  font-weight: 700;
-  font-size: 0.85rem;
-  transition: all 0.2s ease;
+.live-packages{display:flex;gap:9px;overflow-x:auto;padding:4px 2px 14px}
+.pkg-btn{
+  flex:0 0 auto;background:var(--surface-solid);border:1px solid var(--line);color:#fff;
+  padding:10px 20px;border-radius:999px;font-weight:800;font-size:.85rem;transition:.2s ease;
 }
-.cat-btn.active { background: var(--accent); border-color: var(--accent); }
+.pkg-btn.active{background:linear-gradient(135deg,var(--live),var(--live-2));border-color:transparent;box-shadow:0 8px 18px rgba(255,59,92,.3)}
+.pkg-btn.active-vip{background:linear-gradient(135deg,var(--vip),var(--vip-2));border-color:transparent;box-shadow:0 8px 18px rgba(168,85,247,.3)}
+.pkg-btn.state-msg{cursor:default}
 
-/* زر الترفيه المميز */
-.cat-btn.entertainment-btn {
-  background: linear-gradient(135deg, #7209b7, #f72585);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+.channels-section{padding:14px;min-height:180px}
+.channels-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:11px}
+.channel-card{
+  background:var(--surface-solid);border:1px solid var(--line);border-radius:14px;padding:18px 8px;
+  text-align:center;font-weight:800;font-size:.88rem;transition:.18s ease;position:relative;cursor:pointer;
 }
-.cat-btn.entertainment-btn.active {
-  box-shadow: 0 0 15px rgba(247, 37, 133, 0.6);
+.channel-card:active{transform:scale(.96)}
+.channel-card.active-stream{background:rgba(255,59,92,.14);border-color:var(--live)}
+.channel-card.active-stream::after{
+  content:"● مباشر";position:absolute;top:6px;left:6px;font-size:.62rem;color:var(--live);font-weight:900;
 }
 
-.channels-section { padding: 12px; min-height: 200px; }
-.channels-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
-.channel-card {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
-  padding: 16px 8px;
-  cursor: pointer;
-  text-align: center;
-  font-weight: 700;
+/* بطاقات قسم البث الخاص */
+.special-card{
+  background:var(--surface-solid);border:1px solid var(--line);border-radius:16px;
+  padding:14px 10px;text-align:center;font-weight:800;font-size:.9rem;
+  transition:.2s ease;position:relative;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:10px;
 }
-.channel-card.active-stream { background: rgba(247, 37, 133, 0.3); border-color: var(--accent); }
-.close-btn { background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.2); color: white; padding: 4px 10px; border-radius: 8px; cursor: pointer; font-family: 'Cairo'; }
-.loading-text { text-align: center; padding: 30px; font-weight: 600; }
+.special-card:hover{border-color:var(--special);transform:translateY(-3px)}
+.special-card.active-special{background:rgba(16,185,129,.12);border-color:var(--special)}
+.special-card.active-special::after{
+  content:"● متصل";position:absolute;top:8px;left:8px;font-size:.62rem;color:var(--special);font-weight:900;
+}
+.special-card img{
+  width:64px;height:64px;border-radius:14px;object-fit:cover;
+  border:1px solid var(--line-soft);box-shadow:0 4px 12px rgba(0,0,0,.3);
+}
 
-/* قسم عرض الترفيه (سينما البصري) داخل الموقع */
-#entertainment-view {
-  display: none;
-  width: 100%;
-  height: 80vh;
-  border-radius: 16px;
-  overflow: hidden;
-  margin-bottom: 15px;
-  padding: 4px;
+/* ============================================================
+   5) قسم جدول المباريات
+   ============================================================ */
+.matches-wrapper{width:100%;max-width:680px;margin:0 auto}
+.match-card{
+  background:var(--surface-solid);border:1px solid var(--line);border-radius:18px;
+  padding:16px;margin-bottom:14px;box-shadow:var(--shadow-sm);transition:transform .2s ease;
 }
-#entertainment-iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-  border-radius: 12px;
+.teams-header{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:10px}
+.team-logo{width:46px;height:46px;object-fit:contain}
+.vs-dash{color:var(--match);font-size:1.2rem;font-weight:900}
+.match-title{font-size:1.05rem;font-weight:800;margin-bottom:12px;text-align:center}
+.countdown-container{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px}
+.time-box{background:var(--surface-2);border:1px solid var(--line-soft);border-radius:10px;padding:7px 2px;text-align:center}
+.time-value{font-size:1rem;font-weight:800;color:var(--match)}
+.time-label{font-size:.65rem;color:var(--muted)}
+.match-info-bar{font-size:.82rem;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px}
+.match-info-bar .dot{color:var(--match)}
+.streams-container{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.stream-btn{
+  background:var(--surface-2);color:#fff;border:1px solid var(--line);padding:8px 16px;
+  border-radius:10px;cursor:pointer;font-size:.82rem;font-weight:800;transition:.2s;
 }
+.stream-btn:hover{border-color:var(--match);color:var(--match)}
+.match-loading{text-align:center;color:var(--muted);padding:40px 10px;font-size:.9rem}
+
+/* مشغل OvenPlayer */
+.player-modal{
+  position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.92);
+  display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9999;padding:12px;
+}
+.player-content{width:100%;max-width:680px;background:#111;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--shadow)}
+.player-header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--surface-solid)}
+.player-title{font-size:.9rem;color:var(--match);font-weight:900}
+.close-player{background:var(--live);color:#fff;border:none;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:.82rem;font-weight:800}
+#ovenPlayerContainer{width:100%;aspect-ratio:16/9;background:#000}
+.fallback-bar{padding:12px;background:#161618;text-align:center;border-top:1px solid var(--line-soft)}
+.external-btn{background:var(--match);color:#000;border:none;padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:800;display:inline-block}
+
+/* ============================================================
+   6) قسم VIP
+   ============================================================ */
+.vip-search-bar{
+  margin-bottom:14px;display:flex;gap:8px;align-items:center;
+  background:var(--surface-solid);border:1px solid var(--line);
+  padding:6px 12px;border-radius:999px;
+}
+.vip-search-bar input{
+  width:100%;background:transparent;border:0;outline:none;
+  color:#fff;font-size:.88rem;font-family:'Tajawal',sans-serif;
+}
+.vip-search-bar button{
+  background:linear-gradient(135deg,var(--vip),var(--vip-2));
+  border:0;color:#fff;padding:6px 16px;border-radius:999px;font-weight:800;font-size:.8rem;
+}
+.vip-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+  gap:14px;
+}
+.vip-card{
+  background:var(--surface-solid);border:1px solid var(--line);border-radius:14px;
+  overflow:hidden;position:relative;cursor:pointer;transition:.2s ease;
+  display:flex;flex-direction:column;
+}
+.vip-card:hover{transform:translateY(-4px);border-color:var(--vip)}
+.vip-poster-wrap{position:relative;width:100%;aspect-ratio:2/3;background:#0a0f1d}
+.vip-poster-wrap img{width:100%;height:100%;object-fit:cover}
+.vip-badge{
+  position:absolute;top:6px;right:6px;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);
+  color:var(--vip);font-size:.68rem;font-weight:900;padding:2px 7px;border-radius:6px;border:1px solid var(--line);
+}
+.vip-info{padding:10px 8px;flex:1;display:flex;flex-direction:column;justify-content:space-between}
+.vip-title{font-size:.84rem;font-weight:800;line-height:1.3;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.vip-year{font-size:.72rem;color:var(--muted)}
+
+.vip-modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(10px);
+  display:none;align-items:center;justify-content:center;z-index:10000;padding:14px;
+}
+.vip-modal-box{
+  background:var(--surface-solid);border:1px solid var(--line);border-radius:20px;
+  max-width:700px;width:100%;max-height:90vh;display:flex;flex-direction:column;
+  overflow:hidden;box-shadow:var(--shadow);position:relative;
+}
+.vip-modal-header{
+  padding:14px 18px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--line-soft);background:var(--surface-2);
+}
+.vip-modal-header h3{font-size:1rem;font-weight:900;color:var(--vip);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vip-modal-body{padding:16px;overflow-y:auto}
+.vip-detail-layout{display:flex;gap:16px;margin-bottom:16px}
+.vip-detail-poster{width:120px;aspect-ratio:2/3;border-radius:10px;object-fit:cover;flex:0 0 120px}
+.vip-detail-story{font-size:.84rem;color:var(--muted);line-height:1.6}
+.vip-block-title{font-size:.9rem;font-weight:800;margin:12px 0 8px;color:#fff;display:flex;align-items:center;gap:6px}
+.vip-list-wrap{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.vip-action-btn{
+  background:var(--surface-2);border:1px solid var(--line);color:#fff;padding:8px 14px;
+  border-radius:10px;font-size:.8rem;font-weight:800;transition:.2s;
+}
+.vip-action-btn.active{background:linear-gradient(135deg,var(--vip),var(--vip-2));border-color:transparent}
+
+/* ============================================================
+   7) قسم الترفيه
+   ============================================================ */
+.ent-iframe-wrap{
+  width:100%;
+  height:calc(100vh - var(--nav-h) - 20px);
+  position:relative;
+  background:#000;
+  border-radius:var(--r-lg);
+  overflow:hidden;
+  border:1px solid var(--line);
+  box-shadow:var(--shadow);
+}
+.ent-iframe{width:100%;height:100%;border:0;display:block}
+
+/* ============================================================
+   8) شريط التنقل السفلي
+   ============================================================ */
+.bottom-nav{
+  position:fixed;left:0;right:0;bottom:0;z-index:400;display:none;
+  padding:8px 14px calc(8px + env(safe-area-inset-bottom));
+  background:rgba(7,11,20,.94);backdrop-filter:blur(18px);border-top:1px solid var(--line-soft);
+  gap:4px;
+}
+.bottom-nav button{
+  flex:1;border:0;background:transparent;color:var(--muted);border-radius:14px;padding:7px 2px;
+  display:flex;flex-direction:column;align-items:center;gap:3px;font-weight:800;font-size:.65rem;
+}
+.bottom-nav button i{font-size:1.05rem}
+.bottom-nav button.active[data-tab="live"]{color:var(--live)}
+.bottom-nav button.active[data-tab="special"]{color:var(--special)}
+.bottom-nav button.active[data-tab="matches"]{color:var(--match)}
+.bottom-nav button.active[data-tab="vip"]{color:var(--vip)}
+.bottom-nav button.active[data-tab="ent"]{color:var(--primary)}
+
+@media(max-width:640px){
+  .bottom-nav{display:flex}
+  body{padding-bottom:calc(var(--bottom-nav-h) + env(safe-area-inset-bottom))}
+  .brand span.dim{display:none}
+  .ent-iframe-wrap{height:calc(100vh - var(--nav-h) - var(--bottom-nav-h) - 10px)}
+  .vip-detail-layout{flex-direction:column;align-items:center;text-align:center}
+}
+
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;z-index:20000;padding:20px;
+}
+.modal-box{
+  background:linear-gradient(155deg,rgba(18,26,44,.97),rgba(10,15,26,.97));
+  border:1px solid var(--line);border-radius:22px;padding:24px;text-align:center;
+  max-width:340px;width:100%;box-shadow:var(--shadow);
+}
+.modal-icon{width:60px;height:60px;background:#0088cc;border-radius:50%;display:grid;place-items:center;margin:0 auto 14px;box-shadow:0 0 20px rgba(0,136,204,.4)}
+.modal-icon svg{width:32px;height:32px;fill:#fff}
+.modal-buttons{display:flex;gap:10px;margin-top:18px}
+.btn-join{flex:1;background:#0088cc;color:#fff;padding:10px;border-radius:12px;font-weight:800;display:grid;place-items:center}
+.btn-cancel{flex:1;background:var(--surface-solid);color:#ddd;border:1px solid var(--line);padding:10px;border-radius:12px;font-weight:800}
 </style>
-</head> 
+</head>
+<body>
+<div class="app-bg"></div>
 
-<body> 
-
-<header class="header glass-panel">
-  <h1>العُبودي TV</h1>
-  <div class="subtitle">بث مباشر وسينما ترفيهية متكاملة</div>
-  <a href="https://t.me/stlaet1" class="telegram-link" target="_blank">
-    <span>تابعونا على التلكرام</span>
-  </a>
-</header> 
-
-<section id="player-container" class="player-section glass-panel">
-  <div class="player-header">
-    <h3 id="current-channel-title">اسم القناة</h3>
-    <button class="close-btn" onclick="closePlayer()">✕ إغلاق</button>
+<!-- نافذة التلكرام -->
+<div id="telegram-modal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .37z"/></svg></div>
+    <h3 style="font-size:1.15rem;font-weight:900;margin-bottom:6px">قناة التلكرام الرسمية</h3>
+    <p style="font-size:.85rem;color:var(--muted);line-height:1.6">انضم إلى قناتنا للحصول على آخر التحديثات وروابط البث والمباريات!</p>
+    <div class="modal-buttons">
+      <a href="https://t.me/stlaet1" target="_blank" class="btn-join" onclick="closeTelegramModal()">انضمام</a>
+      <button class="btn-cancel" onclick="closeTelegramModal()">إلغاء</button>
+    </div>
   </div>
-  <div id="artplayer-container"></div>
-  <div class="servers-container" id="servers-list"></div>
-</section>
-
-<div class="categories-bar" id="categories-bar">
-  <div class="loading-text">جاري جلب الباقات...</div>
 </div>
 
-<section id="entertainment-view" class="glass-panel">
-  <iframe id="entertainment-iframe" src="" allowfullscreen loading="lazy"></iframe>
-</section>
-
-<section id="channels-section" class="channels-section glass-panel">
-  <div class="channels-grid" id="channels">
-    <div class="loading-text" style="grid-column: 1 / -1;">اختر باقة لعرض القنوات</div>
+<!-- شريط التنقل العلوي -->
+<header class="top-nav">
+  <div class="nav-inner">
+    <div class="brand brand-font">
+      <span class="brand-mark"><i class="fa-solid fa-play"></i></span>
+      <span>العُبودي TV<span class="dim">بث · خاص · مباريات · VIP · ترفيه</span></span>
+    </div>
+    <nav class="main-tabs" id="mainTabs">
+      <button class="main-tab active" data-tab="live" onclick="switchMainTab('live')">
+        <span class="nav-live-pulse"></span> البث المباشر
+      </button>
+      <button class="main-tab" data-tab="special" onclick="switchMainTab('special')">
+        <span class="nav-special-pulse"></span> البث الخاص
+      </button>
+      <button class="main-tab" data-tab="matches" onclick="switchMainTab('matches')">
+        <i class="fa-solid fa-futbol"></i> المباريات
+      </button>
+      <button class="main-tab" data-tab="vip" onclick="switchMainTab('vip')">
+        <i class="fa-solid fa-crown" style="color:#f59e0b"></i> VIP
+      </button>
+      <button class="main-tab" data-tab="ent" onclick="switchMainTab('ent')">
+        <i class="fa-solid fa-clapperboard"></i> الترفيه
+      </button>
+    </nav>
   </div>
-</section>
+</header>
+
+<!-- شريط التنقل السفلي -->
+<nav class="bottom-nav" id="bottomNav">
+  <button class="active" data-tab="live" onclick="switchMainTab('live')"><i class="fa-solid fa-satellite-dish"></i>البث المباشر</button>
+  <button data-tab="special" onclick="switchMainTab('special')"><i class="fa-solid fa-bolt"></i>البث الخاص</button>
+  <button data-tab="matches" onclick="switchMainTab('matches')"><i class="fa-solid fa-futbol"></i>المباريات</button>
+  <button data-tab="vip" onclick="switchMainTab('vip')"><i class="fa-solid fa-crown"></i>VIP</button>
+  <button data-tab="ent" onclick="switchMainTab('ent')"><i class="fa-solid fa-clapperboard"></i>الترفيه</button>
+</nav>
+
+<!-- 1) البث المباشر العام -->
+<main id="app-live" class="app-view active">
+  <div class="shell">
+    <div class="live-hero">
+      <h1 class="brand-font">العُبودي TV</h1>
+      <div class="subtitle">بث مباشر لجميع الباقات والقنوات العالمية والعربية</div>
+      <a href="https://t.me/stlaet1" class="telegram-link" target="_blank">
+        <i class="fa-brands fa-telegram"></i><span>تابعونا على التلكرام</span>
+      </a>
+    </div>
+
+    <section id="player-container" class="live-player-section glass-panel">
+      <div class="live-player-header">
+        <h3 id="current-channel-title"><span class="nav-live-pulse"></span> اسم القناة</h3>
+        <button class="close-btn" onclick="Live.closePlayer()"><i class="fa-solid fa-xmark"></i> إغلاق</button>
+      </div>
+      <div id="artplayer-container"></div>
+      <div class="live-servers" id="servers-list"></div>
+    </section>
+
+    <div class="live-packages hscroll" id="categories-bar">
+      <button class="pkg-btn state-msg" disabled>جاري جلب الباقات...</button>
+    </div>
+
+    <section id="channels-section" class="channels-section glass-panel">
+      <div class="section-title">
+        <h2>القنوات</h2>
+        <span class="section-count" id="channelsCount">—</span>
+      </div>
+      <div class="channels-grid" id="channels">
+        <div class="match-loading"><i class="fa-solid fa-satellite-dish"></i> اختر باقة لعرض قنواتها</div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<!-- 2) قسم البث الخاص -->
+<main id="app-special" class="app-view">
+  <div class="shell">
+    <div class="live-hero">
+      <h1 class="brand-font" style="color:var(--special)">قنوات البث الخاص</h1>
+      <div class="subtitle">سيرفرات سريعة ومخصصة لأهم المباريات والفعاليات الرياضية</div>
+    </div>
+
+    <section id="special-player-container" class="live-player-section glass-panel">
+      <div class="live-player-header">
+        <h3 id="special-channel-title"><span class="nav-special-pulse"></span> تشغيل البث الخاص</h3>
+        <button class="close-btn" onclick="SpecialLive.closePlayer()"><i class="fa-solid fa-xmark"></i> إغلاق</button>
+      </div>
+      <div id="special-artplayer-container"></div>
+    </section>
+
+    <section class="channels-section glass-panel">
+      <div class="section-title special">
+        <h2>القنوات المتاحة</h2>
+        <span class="section-count" id="specialChannelsCount">4 قنوات</span>
+      </div>
+      <div class="channels-grid" id="special-channels-grid"></div>
+    </section>
+  </div>
+</main>
+
+<!-- 3) جدول المباريات -->
+<main id="app-matches" class="app-view">
+  <div class="shell">
+    <div class="matches-wrapper">
+      <div class="section-title">
+        <h2>جدول مباريات اليوم</h2>
+      </div>
+      <div id="matchesContainer" class="match-loading">جاري جلب جدول المباريات...</div>
+    </div>
+  </div>
+</main>
+
+<!-- 4) قسم VIP -->
+<main id="app-vip" class="app-view">
+  <div class="shell">
+    <div class="vip-search-bar">
+      <i class="fa-solid fa-magnifying-glass" style="color:var(--muted);margin-right:4px"></i>
+      <input type="text" id="vipSearchInput" placeholder="ابحث عن فيلم أو مسلسل..." onkeydown="if(event.key==='Enter') VipModule.search()">
+      <button onclick="VipModule.search()">بحث</button>
+    </div>
+
+    <div class="live-packages hscroll" id="vip-categories-bar">
+      <button class="pkg-btn active-vip" onclick="VipModule.fetchPosts('all')">الكل</button>
+      <button class="pkg-btn state-msg" disabled>جاري جلب الأقسام...</button>
+    </div>
+
+    <section class="channels-section glass-panel">
+      <div class="section-title vip">
+        <h2>المحتوى المميز</h2>
+        <span class="section-count" id="vipContentCount">—</span>
+      </div>
+      <div class="vip-grid" id="vipGrid">
+        <div class="match-loading" style="grid-column:1/-1"><i class="fa-solid fa-spinner fa-spin"></i> جاري جلب المحتوى...</div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<!-- نافذة تفاصيل VIP -->
+<div id="vipModal" class="vip-modal-overlay">
+  <div class="vip-modal-box">
+    <div class="vip-modal-header">
+      <h3 id="vipModalTitle">تفاصيل العمل</h3>
+      <button class="close-player" onclick="VipModule.closeModal()">✕</button>
+    </div>
+    <div class="vip-modal-body" id="vipModalBody">
+      <div class="match-loading"><i class="fa-solid fa-spinner fa-spin"></i> جاري التحميل...</div>
+    </div>
+  </div>
+</div>
+
+<!-- نافذة مشغل مباريات OvenPlayer -->
+<div id="playerModal" class="player-modal">
+  <div class="player-content">
+    <div class="player-header">
+      <span class="player-title" id="playerTitle">مشغل الفيديو</span>
+      <button class="close-player" onclick="Matches.closePlayer()">إغلاق ✕</button>
+    </div>
+    <div id="ovenPlayerContainer"></div>
+    <div class="fallback-bar">
+      <a id="externalAppBtn" href="#" class="external-btn" target="_blank">تشغيل الرابط المباشر</a>
+    </div>
+  </div>
+</div>
+
+<!-- 5) قسم الترفيه -->
+<main id="app-ent" class="app-view">
+  <div class="shell" style="padding-bottom:10px">
+    <div class="ent-iframe-wrap">
+      <iframe src="https://m.filmcity12.com/" class="ent-iframe" allowfullscreen allow="autoplay; fullscreen; picture-in-picture"></iframe>
+    </div>
+  </div>
+</main>
 
 <script>
-const PROXY_WORKER = "https://yacine-proxy.hsinnzaer5.workers.dev";
-const CINEMA_URL = "https://albasritv.github.io/albasri-cinema.html";
+function closeTelegramModal(){
+  const m = document.getElementById("telegram-modal");
+  if(m) m.style.display = "none";
+}
 
-let artInstance = null;
-let currentHls = null;
+let activeMainTab = 'live';
 
-async function fetchCategories() {
-  const catBar = document.getElementById("categories-bar");
-  try {
-    const res = await fetch(`${PROXY_WORKER}/api/categories`);
-    const data = await res.json();
-    if (data.error) throw new Error(data.message);
+function switchMainTab(tab){
+  if (tab === activeMainTab) return;
+  activeMainTab = tab;
 
-    const categories = Array.isArray(data) ? data : (data.categories || data.data || []);
-    if (categories.length === 0) throw new Error("لم يتم العثور على باقات");
+  document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
+  document.getElementById('app-' + tab).classList.add('active');
 
-    catBar.innerHTML = "";
+  document.querySelectorAll('.main-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.bottom-nav button').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
 
-    // 1. إضافة زر الترفيه الثابت في البداية (يعمل بشكل منفصل وبدون استهلاك للوركر)
-    const entBtn = document.createElement("button");
-    entBtn.className = "cat-btn entertainment-btn";
-    entBtn.innerHTML = "🍿 ترفيه";
-    entBtn.onclick = () => {
-      document.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("active"));
-      entBtn.classList.add("active");
-      openEntertainment();
-    };
-    catBar.appendChild(entBtn);
+  if (tab !== 'live') Live.pause();
+  if (tab !== 'special') SpecialLive.pause();
+  if (tab !== 'matches') Matches.closePlayer();
 
-    // 2. إضافة باقي الباقات الحية
-    categories.forEach((cat) => {
-      const btn = document.createElement("button");
-      btn.className = "cat-btn";
-      btn.textContent = cat.name || cat.title || `باقة ${cat.id}`;
-      btn.onclick = () => {
-        document.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        showChannelsView();
-        fetchChannels(cat.id);
-      };
-      catBar.appendChild(btn);
-    });
-
-    // فتح الباقة الأولى افتراضياً
-    if (categories.length > 0) {
-      const firstCatBtn = catBar.children[1];
-      if (firstCatBtn) firstCatBtn.classList.add("active");
-      fetchChannels(categories[0].id);
-    }
-  } catch (err) {
-    catBar.innerHTML = `<div class="loading-text">⚠️ تعذر تحميل الأقسام: ${err.message}</div>`;
+  if (tab === 'vip' && !VipModule.isInitialized()){
+    VipModule.init();
   }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// عرض واجهة الترفيه الداخلية
-function openEntertainment() {
-  closePlayer();
-  document.getElementById("channels-section").style.display = "none";
-  const entView = document.getElementById("entertainment-view");
-  const iframe = document.getElementById("entertainment-iframe");
-  
-  if (!iframe.src || iframe.src === "about:blank" || iframe.src === window.location.href) {
-    iframe.src = CINEMA_URL;
-  }
-  entView.style.display = "block";
-  entView.scrollIntoView({ behavior: "smooth" });
-}
+/* ===================== موديل البث الخاص (HTTPS مباشر بدون وركر) ===================== */
+const SpecialLive = (function(){
+  const LOGO_URL = "https://k.top4top.io/p_3889xlrso1.jpg";
 
-// العودة إلى وضع القنوات
-function showChannelsView() {
-  document.getElementById("entertainment-view").style.display = "none";
-  document.getElementById("channels-section").style.display = "block";
-}
+  const specialChannels = [
+    { id: 1, name: "البث الخاص 1", url: "https://a57330-b165.a.jrnm.app/?play=BeoutQ1.m3u8" },
+    { id: 2, name: "البث الخاص 2", url: "https://a57330-b165.a.jrnm.app/?play=BeoutQ2.m3u8" },
+    { id: 3, name: "البث الخاص 3", url: "https://a57330-b165.a.jrnm.app/?play=BeoutQ3.m3u8" },
+    { id: 4, name: "البث الخاص 4", url: "https://a57330-b165.a.jrnm.app/?play=BeoutQ4.m3u8" }
+  ];
 
-async function fetchChannels(categoryId) {
-  const grid = document.getElementById("channels");
-  grid.innerHTML = `<div class="loading-text" style="grid-column: 1 / -1;">جاري جلب قنوات الباقة...</div>`;
+  let artInstance = null;
+  let currentHls = null;
 
-  try {
-    const res = await fetch(`${PROXY_WORKER}/api/categories/${categoryId}/channels`);
-    const data = await res.json();
-    if (data.error) throw new Error(data.message);
-
-    const channels = Array.isArray(data) ? data : (data.channels || data.data || []);
-    if (channels.length === 0) {
-      grid.innerHTML = `<div class="loading-text" style="grid-column: 1 / -1;">لا توجد قنوات متاحة في هذه الباقة</div>`;
-      return;
-    }
-
+  function init(){
+    const grid = document.getElementById("special-channels-grid");
+    if (!grid) return;
     grid.innerHTML = "";
-    channels.forEach(ch => {
+
+    specialChannels.forEach(ch => {
       const card = document.createElement("div");
-      card.className = "channel-card";
-      card.textContent = ch.name || ch.title;
+      card.className = "special-card";
+      card.innerHTML = `
+        <img src="${LOGO_URL}" alt="${ch.name}">
+        <span>${ch.name}</span>
+      `;
       card.onclick = () => {
-        document.querySelectorAll(".channel-card").forEach(c => c.classList.remove("active-stream"));
-        card.classList.add("active-stream");
-        loadChannel(ch.id, ch.name || ch.title);
+        document.querySelectorAll(".special-card").forEach(c => c.classList.remove("active-special"));
+        card.classList.add("active-special");
+        playChannel(ch);
       };
       grid.appendChild(card);
     });
-  } catch (err) {
-    grid.innerHTML = `<div class="loading-text" style="grid-column: 1 / -1;">⚠️ تعذر تحميل القنوات: ${err.message}</div>`;
-  }
-}
-
-async function loadChannel(channelId, channelName) {
-  const container = document.getElementById("player-container");
-  const title = document.getElementById("current-channel-title");
-  const serversDiv = document.getElementById("servers-list");
-
-  container.style.display = "block";
-  title.textContent = `جاري تجهيز سيرفرات: ${channelName}...`;
-  serversDiv.innerHTML = "";
-  container.scrollIntoView({ behavior: "smooth" });
-
-  try {
-    const res = await fetch(`${PROXY_WORKER}/api/channel/${channelId}`);
-    const data = await res.json();
-    if (data.error) throw new Error(data.message);
-
-    let streamList = [];
-    if (Array.isArray(data)) {
-      streamList = data;
-    } else if (data.data && Array.isArray(data.data)) {
-      streamList = data.data;
-    } else if (data.url || data.stream_url) {
-      streamList = [{ name: "السيرفر الرئيسي", url: data.url || data.stream_url }];
-    }
-
-    if (streamList.length === 0) throw new Error("السيرفرات غير متوفرة حالياً");
-
-    title.textContent = `🔴 بث مباشر: ${channelName}`;
-
-    let defaultIndex = 0;
-    streamList.forEach((st, idx) => {
-      const name = (st.name || st.quality || '').toLowerCase();
-      if (name.includes('720') || name.includes('sd')) defaultIndex = idx;
-    });
-
-    streamList.forEach((st, idx) => {
-      const targetUrl = st.url || st.stream_url;
-      if (!targetUrl) return;
-
-      const btn = document.createElement("button");
-      btn.className = `server-btn ${idx === defaultIndex ? 'active' : ''}`;
-      btn.textContent = st.name || st.quality || `سيرفر ${idx + 1}`;
-      btn.onclick = () => {
-        document.querySelectorAll(".server-btn").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        startArtPlayer(targetUrl);
-      };
-      serversDiv.appendChild(btn);
-    });
-
-    const firstUrl = streamList[defaultIndex].url || streamList[defaultIndex].stream_url;
-    if (firstUrl) startArtPlayer(firstUrl);
-
-  } catch (err) {
-    title.textContent = `خطأ: ${err.message}`;
-  }
-}
-
-function startArtPlayer(rawUrl) {
-  const proxiedStreamUrl = `${PROXY_WORKER}?stream=${encodeURIComponent(rawUrl)}`;
-
-  if (currentHls) {
-    currentHls.stopLoad();
-    currentHls.detachMedia();
-    currentHls.destroy();
-    currentHls = null;
   }
 
-  if (artInstance) {
-    if (artInstance.video) {
-      artInstance.video.pause();
-      artInstance.video.removeAttribute('src');
-      artInstance.video.load();
-    }
-    artInstance.destroy(true);
-    artInstance = null;
-  }
+  function playChannel(ch){
+    const container = document.getElementById("special-player-container");
+    const title = document.getElementById("special-channel-title");
 
-  const container = document.getElementById('artplayer-container');
-  container.innerHTML = "";
+    container.style.display = "block";
+    title.innerHTML = `<span class="nav-special-pulse"></span> ${ch.name}`;
+    container.scrollIntoView({ behavior: "smooth", block: "start" });
 
-  artInstance = new Artplayer({
-    container: '#artplayer-container',
-    url: proxiedStreamUrl,
-    type: 'm3u8',
-    isLive: true,
-    autoplay: true,
-    fullscreen: true,
-    fullscreenWeb: true,
-    playsInline: true,
-    customType: {
-      m3u8: function (video, url) {
-        if (Hls.isSupported()) {
-          const hls = new Hls({
-            enableWorker: true,
-            lowLatencyMode: false,
-            liveSyncDurationCount: 3,
-            maxBufferLength: 8,
-            maxMaxBufferLength: 16
-          });
+    closePlayer(true);
 
-          hls.loadSource(url);
-          hls.attachMedia(video);
-          currentHls = hls;
-
-          hls.on(Hls.Events.ERROR, function (event, data) {
-            if (data.fatal) {
-              if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-                hls.startLoad();
-              } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-                hls.recoverMediaError();
-              } else {
-                hls.destroy();
-              }
-            }
-          });
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-          video.src = url;
-        }
+    artInstance = new Artplayer({
+      container: '#special-artplayer-container',
+      url: ch.url,
+      type: 'm3u8',
+      isLive: true,
+      autoplay: true,
+      fullscreen: true,
+      fullscreenWeb: true,
+      playsInline: true,
+      customType: {
+        m3u8: function (video, url){
+          if (Hls.isSupported()){
+            const hls = new Hls({ enableWorker: true, lowLatencyMode: false });
+            hls.loadSource(url);
+            hls.attachMedia(video);
+            currentHls = hls;
+          } else if (video.canPlayType('application/vnd.apple.mpegurl')){
+            video.src = url;
+          }
+        },
       },
-    },
-  });
-}
-
-function closePlayer() {
-  if (currentHls) {
-    currentHls.stopLoad();
-    currentHls.detachMedia();
-    currentHls.destroy();
-    currentHls = null;
+    });
   }
-  if (artInstance) {
-    if (artInstance.video) {
-      artInstance.video.pause();
-      artInstance.video.removeAttribute('src');
-      artInstance.video.load();
+
+  function closePlayer(keepDom){
+    if (currentHls){ currentHls.stopLoad(); currentHls.detachMedia(); currentHls.destroy(); currentHls = null; }
+    if (artInstance){ artInstance.destroy(true); artInstance = null; }
+    if (!keepDom){
+      document.getElementById("special-player-container").style.display = "none";
+      document.querySelectorAll(".special-card").forEach(c => c.classList.remove("active-special"));
     }
-    artInstance.destroy(true);
-    artInstance = null;
   }
-  document.getElementById("player-container").style.display = "none";
-  document.querySelectorAll(".channel-card").forEach(c => c.classList.remove("active-stream"));
-}
 
-document.addEventListener("DOMContentLoaded", fetchCategories);
+  function pause(){
+    try{ if (artInstance && artInstance.video) artInstance.video.pause(); }catch(e){}
+  }
+
+  return { init, playChannel, closePlayer, pause };
+})();
+
+/* ===================== موديل البث المباشر العام ===================== */
+const Live = (function(){
+  const PROXY_WORKER = "https://yacine-proxy.hsinnzaer5.workers.dev";
+  let artInstance = null;
+  let currentHls = null;
+
+  async function fetchCategories(){
+    const catBar = document.getElementById("categories-bar");
+    try{
+      const res = await fetch(`${PROXY_WORKER}/api/categories`);
+      const data = await res.json();
+      const categories = Array.isArray(data) ? data : (data.categories || data.data || []);
+      if (!categories.length) throw new Error("لا توجد باقات");
+
+      catBar.innerHTML = "";
+      categories.forEach((cat) => {
+        const btn = document.createElement("button");
+        btn.className = "pkg-btn";
+        btn.textContent = cat.name || cat.title || `باقة ${cat.id}`;
+        btn.onclick = () => {
+          document.querySelectorAll(".pkg-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          fetchChannels(cat.id);
+        };
+        catBar.appendChild(btn);
+      });
+
+      if (categories.length > 0){
+        catBar.children[0].classList.add("active");
+        fetchChannels(categories[0].id);
+      }
+    }catch(err){
+      catBar.innerHTML = `<button class="pkg-btn state-msg" disabled>⚠️ تعذر تحميل الباقات</button>`;
+    }
+  }
+
+  async function fetchChannels(categoryId){
+    const grid = document.getElementById("channels");
+    const count = document.getElementById("channelsCount");
+    grid.innerHTML = `<div class="match-loading" style="grid-column:1/-1"><i class="fa-solid fa-spinner fa-spin"></i> جاري جلب القنوات...</div>`;
+
+    try{
+      const res = await fetch(`${PROXY_WORKER}/api/categories/${categoryId}/channels`);
+      const data = await res.json();
+      const channels = Array.isArray(data) ? data : (data.channels || data.data || []);
+      if (!channels.length){
+        grid.innerHTML = `<div class="match-loading" style="grid-column:1/-1">لا توجد قنوات متاحة في هذه الباقة</div>`;
+        count.textContent = "0 قناة";
+        return;
+      }
+
+      count.textContent = `${channels.length} قناة`;
+      grid.innerHTML = "";
+      channels.forEach(ch => {
+        const card = document.createElement("div");
+        card.className = "channel-card";
+        card.textContent = ch.name || ch.title;
+        card.onclick = () => {
+          document.querySelectorAll(".channel-card").forEach(c => c.classList.remove("active-stream"));
+          card.classList.add("active-stream");
+          loadChannel(ch.id, ch.name || ch.title);
+        };
+        grid.appendChild(card);
+      });
+    }catch(err){
+      grid.innerHTML = `<div class="match-loading" style="grid-column:1/-1">تعذر تحميل القنوات</div>`;
+      count.textContent = "—";
+    }
+  }
+
+  async function loadChannel(channelId, channelName){
+    const container = document.getElementById("player-container");
+    const title = document.getElementById("current-channel-title");
+    const serversDiv = document.getElementById("servers-list");
+
+    container.style.display = "block";
+    title.innerHTML = `<span class="nav-live-pulse"></span> جاري تجهيز سيرفرات: ${channelName}...`;
+    serversDiv.innerHTML = "";
+    container.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    try{
+      const res = await fetch(`${PROXY_WORKER}/api/channel/${channelId}`);
+      const data = await res.json();
+
+      let streamList = [];
+      if (Array.isArray(data)) streamList = data;
+      else if (data.data && Array.isArray(data.data)) streamList = data.data;
+      else if (data.url || data.stream_url) streamList = [{ name: "السيرفر الرئيسي", url: data.url || data.stream_url }];
+
+      if (!streamList.length) throw new Error("السيرفرات غير متوفرة حالياً");
+
+      title.innerHTML = `<span class="nav-live-pulse"></span> ${channelName}`;
+      let defaultIndex = 0;
+
+      streamList.forEach((st, idx) => {
+        const targetUrl = st.url || st.stream_url;
+        if (!targetUrl) return;
+        const btn = document.createElement("button");
+        btn.className = `server-btn ${idx === defaultIndex ? 'active' : ''}`;
+        btn.textContent = st.name || st.quality || `سيرفر ${idx + 1}`;
+        btn.onclick = () => {
+          document.querySelectorAll(".server-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          startArtPlayer(targetUrl);
+        };
+        serversDiv.appendChild(btn);
+      });
+
+      const firstUrl = streamList[defaultIndex].url || streamList[defaultIndex].stream_url;
+      if (firstUrl) startArtPlayer(firstUrl);
+    }catch(err){
+      title.textContent = `خطأ في التشغيل`;
+    }
+  }
+
+  function startArtPlayer(rawUrl){
+    const proxiedStreamUrl = `${PROXY_WORKER}?stream=${encodeURIComponent(rawUrl)}`;
+    closePlayer(true);
+
+    artInstance = new Artplayer({
+      container: '#artplayer-container',
+      url: proxiedStreamUrl,
+      type: 'm3u8',
+      isLive: true,
+      autoplay: true,
+      fullscreen: true,
+      fullscreenWeb: true,
+      playsInline: true,
+      customType: {
+        m3u8: function (video, url){
+          if (Hls.isSupported()){
+            const hls = new Hls({ enableWorker: true, lowLatencyMode: false });
+            hls.loadSource(url);
+            hls.attachMedia(video);
+            currentHls = hls;
+          } else if (video.canPlayType('application/vnd.apple.mpegurl')){
+            video.src = url;
+          }
+        },
+      },
+    });
+  }
+
+  function closePlayer(keepDom){
+    if (currentHls){ currentHls.stopLoad(); currentHls.detachMedia(); currentHls.destroy(); currentHls = null; }
+    if (artInstance){ artInstance.destroy(true); artInstance = null; }
+    if (!keepDom){
+      document.getElementById("player-container").style.display = "none";
+      document.querySelectorAll(".channel-card").forEach(c => c.classList.remove("active-stream"));
+    }
+  }
+
+  function pause(){
+    try{ if (artInstance && artInstance.video) artInstance.video.pause(); }catch(e){}
+  }
+
+  return { fetchCategories, closePlayer, pause };
+})();
+
+/* ===================== موديل جدول المباريات ===================== */
+const Matches = (function(){
+  const API_BASE = "https://dev-kdtv.pantheonsite.io/yacin/yacin.php?path=";
+  let playerInstance = null;
+
+  async function fetchMatches(){
+    const container = document.getElementById("matchesContainer");
+    try{
+      const response = await fetch(`${API_BASE}events`);
+      const data = await response.json();
+
+      if (!data.data || data.data.length === 0){
+        container.innerHTML = `<div class="match-loading">لا توجد مباريات متاحة الآن.</div>`;
+        return;
+      }
+
+      container.innerHTML = "";
+      data.data.forEach(match => {
+        const card = document.createElement("div");
+        card.className = "match-card";
+
+        const matchDate = new Date(match.start_time * 1000);
+        const timeString = matchDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+        const dateString = matchDate.toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' });
+
+        const diff = match.start_time - Math.floor(Date.now() / 1000);
+        let days = "00", hours = "00", mins = "00", secs = "00";
+        if (diff > 0){
+          days = String(Math.floor(diff / 86400)).padStart(2, '0');
+          hours = String(Math.floor((diff % 86400) / 3600)).padStart(2, '0');
+          mins = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+          secs = String(Math.floor(diff % 60)).padStart(2, '0');
+        }
+
+        card.innerHTML = `
+          <div class="teams-header">
+            <img src="${match.team_1.logo}" alt="" class="team-logo">
+            <span class="vs-dash">—</span>
+            <img src="${match.team_2.logo}" alt="" class="team-logo">
+          </div>
+          <div class="match-title">${match.team_1.name} ضد ${match.team_2.name}</div>
+          <div class="countdown-container">
+            <div class="time-box"><div class="time-value">${days}</div><div class="time-label">يوم</div></div>
+            <div class="time-box"><div class="time-value">${hours}</div><div class="time-label">ساعة</div></div>
+            <div class="time-box"><div class="time-value">${mins}</div><div class="time-label">دقيقة</div></div>
+            <div class="time-box"><div class="time-value">${secs}</div><div class="time-label">ثانية</div></div>
+          </div>
+          <div class="match-info-bar">
+            <span>${dateString}</span><span class="dot">•</span>
+            <span>${timeString}</span><span class="dot">•</span>
+            <span>${match.channel}</span><span class="dot">•</span>
+            <span>${match.champions}</span>
+          </div>
+          <div class="streams-container" id="streams-${match.id}">
+            <span style="font-size:0.75rem;color:#777;">جاري جلب السيرفرات...</span>
+          </div>
+        `;
+        container.appendChild(card);
+
+        fetch(`${API_BASE}events/${match.id}`)
+          .then(res => res.json())
+          .then(streamData => {
+            const streamsDiv = document.getElementById(`streams-${match.id}`);
+            streamsDiv.innerHTML = "";
+            if (streamData.streams && streamData.streams.length > 0){
+              streamData.streams.forEach(stream => {
+                const btn = document.createElement("button");
+                btn.className = "stream-btn";
+                btn.innerText = stream.quality;
+                btn.onclick = () => playStream(stream.url, `${match.team_1.name} - ${stream.quality}`);
+                streamsDiv.appendChild(btn);
+              });
+            } else {
+              streamsDiv.innerHTML = `<span style="font-size:0.75rem;color:#ef4444;">لا توجد سيرفرات متاحة</span>`;
+            }
+          })
+          .catch(() => {
+            document.getElementById(`streams-${match.id}`).innerHTML = `<span style="font-size:0.75rem;color:#ef4444;">تعذر تحميل السيرفرات</span>`;
+          });
+      });
+    }catch(err){
+      container.innerHTML = `<div class="match-loading" style="color:#ef4444;">حدث خطأ في تحميل جدول المباريات.</div>`;
+    }
+  }
+
+  function playStream(rawUrl, title){
+    const modal = document.getElementById("playerModal");
+    const extBtn = document.getElementById("externalAppBtn");
+    document.getElementById("playerTitle").innerText = title;
+
+    const streamUrl = rawUrl.startsWith("http") ? rawUrl : `https://${rawUrl}`;
+    extBtn.href = streamUrl;
+    modal.style.display = "flex";
+
+    if (playerInstance){
+      playerInstance.remove();
+      playerInstance = null;
+    }
+
+    playerInstance = OvenPlayer.create("ovenPlayerContainer", {
+      autoStart: true,
+      controls: true,
+      sources: [{ label: title, type: "hls", file: streamUrl }]
+    });
+  }
+
+  function closePlayer(){
+    const modal = document.getElementById("playerModal");
+    if (playerInstance){
+      playerInstance.remove();
+      playerInstance = null;
+    }
+    if (modal) modal.style.display = "none";
+  }
+
+  return { fetchMatches, playStream, closePlayer };
+})();
+
+/* ===================== موديل VIP ===================== */
+const VipModule = (function(){
+  const API_ENDPOINT = "https://wecima.bar/api.php";
+  const PROXY = "https://yacine-proxy.hsinnzaer5.workers.dev";
+  let initialized = false;
+
+  async function fetchWithTimeout(url, options = {}, timeout = 6000) {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    try {
+      const response = await fetch(url, { ...options, signal: controller.signal });
+      clearTimeout(id);
+      return response;
+    } catch (error) {
+      clearTimeout(id);
+      throw error;
+    }
+  }
+
+  async function request(url){
+    const customHeaders = {
+      "X-App-Key": "sv_x9k2m7p4q8n3r6t1w5y0z",
+      "X-App-Sig": "0de08ec6cd0526dcc699041ed8e6dfb3",
+      "X-App-Chk": "cebe2159",
+      "X-Device-ID": "3b29c9ef4e872d8a",
+      "X-Device-Name": "Samsung SM-S901B"
+    };
+
+    const fetchWays = [
+      async () => {
+        const res = await fetchWithTimeout(`${PROXY}?stream=${encodeURIComponent(url)}`);
+        return await res.json();
+      },
+      async () => {
+        const res = await fetchWithTimeout(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`, { headers: customHeaders });
+        return await res.json();
+      },
+      async () => {
+        const res = await fetchWithTimeout(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
+        const data = await res.json();
+        return JSON.parse(data.contents);
+      },
+      async () => {
+        const res = await fetchWithTimeout(url, { headers: customHeaders });
+        return await res.json();
+      }
+    ];
+
+    for (let fn of fetchWays) {
+      try {
+        const result = await fn();
+        if (result && typeof result === "object") return result;
+      } catch (err) {}
+    }
+    throw new Error("فشل الاتصال");
+  }
+
+  async function init(){
+    initialized = true;
+    fetchCategories();
+    fetchPosts('all');
+  }
+
+  function isInitialized(){ return initialized; }
+
+  async function fetchCategories(){
+    const catBar = document.getElementById("vip-categories-bar");
+    try {
+      const data = await request(`${API_ENDPOINT}?action=categories`);
+      const cats = Array.isArray(data) ? data : (data.categories || data.data || []);
+      
+      let html = `<button class="pkg-btn active-vip" onclick="VipModule.fetchPosts('all', this)">الكل</button>`;
+      cats.forEach(c => {
+        html += `<button class="pkg-btn" onclick="VipModule.fetchPosts('${c.slug}', this)">${c.name}</button>`;
+      });
+      catBar.innerHTML = html;
+    } catch(err){
+      catBar.innerHTML = `<button class="pkg-btn active-vip" onclick="VipModule.fetchPosts('all', this)">الكل</button>`;
+    }
+  }
+
+  async function fetchPosts(categorySlug = 'all', btnElement = null){
+    if(btnElement){
+      document.querySelectorAll("#vip-categories-bar .pkg-btn").forEach(b => b.classList.remove("active-vip"));
+      btnElement.classList.add("active-vip");
+    }
+
+    const grid = document.getElementById("vipGrid");
+    const count = document.getElementById("vipContentCount");
+    grid.innerHTML = `<div class="match-loading" style="grid-column:1/-1"><i class="fa-solid fa-spinner fa-spin"></i> جاري التحميل...</div>`;
+
+    try {
+      let url = `${API_ENDPOINT}?action=posts&page=1&per_page=24`;
+      if(categorySlug === 'all') url += `&type=all`;
+      else url += `&category=${encodeURIComponent(categorySlug)}`;
+
+      const data = await request(url);
+      const posts = data.posts || (Array.isArray(data) ? data : []);
+
+      if(!posts.length){
+        grid.innerHTML = `<div class="match-loading" style="grid-column:1/-1">لا يوجد محتوى متوفر حالياً</div>`;
+        count.textContent = "0";
+        return;
+      }
+
+      count.textContent = `${posts.length} عنصر`;
+      renderPosts(posts);
+    } catch(err){
+      grid.innerHTML = `<div class="match-loading" style="grid-column:1/-1"><i class="fa-solid fa-triangle-exclamation" style="color:var(--vip)"></i> تعذر جلب البيانات. <button onclick="VipModule.fetchPosts('${categorySlug}')" style="background:var(--surface-2);color:#fff;border:1px solid var(--line);padding:4px 10px;border-radius:6px;cursor:pointer;margin-top:6px;display:block;margin-inline:auto">إعادة المحاولة</button></div>`;
+    }
+  }
+
+  async function search(){
+    const query = document.getElementById("vipSearchInput").value.trim();
+    if(!query) return;
+
+    const grid = document.getElementById("vipGrid");
+    const count = document.getElementById("vipContentCount");
+    grid.innerHTML = `<div class="match-loading" style="grid-column:1/-1"><i class="fa-solid fa-spinner fa-spin"></i> جاري البحث عن "${query}"...</div>`;
+
+    try {
+      const data = await request(`${API_ENDPOINT}?action=posts&search=${encodeURIComponent(query)}&page=1&per_page=24`);
+      const posts = data.posts || (Array.isArray(data) ? data : []);
+      if(!posts.length){
+        grid.innerHTML = `<div class="match-loading" style="grid-column:1/-1">لا توجد نتائج مطابقة</div>`;
+        count.textContent = "0";
+        return;
+      }
+      count.textContent = `${posts.length} نتيجة`;
+      renderPosts(posts);
+    } catch(err){
+      grid.innerHTML = `<div class="match-loading" style="grid-column:1/-1">تعذر إجراء البحث</div>`;
+    }
+  }
+
+  function renderPosts(posts){
+    const grid = document.getElementById("vipGrid");
+    grid.innerHTML = "";
+    posts.forEach(item => {
+      const isSeries = !!(item.series_slug || item.season_slug);
+      const card = document.createElement("div");
+      card.className = "vip-card";
+      card.onclick = () => openDetails(item);
+
+      card.innerHTML = `
+        <div class="vip-poster-wrap">
+          <img src="${item.thumbnail || ''}" alt="${item.title || ''}" loading="lazy" onerror="this.src='https://via.placeholder.com/300x450/121a2c/93a1ba?text=No+Image'">
+          <span class="vip-badge">${isSeries ? 'مسلسل' : 'فيلم'}</span>
+        </div>
+        <div class="vip-info">
+          <div class="vip-title">${item.title || 'بدون عنوان'}</div>
+          <div class="vip-year">${item['release-year'] || ''}</div>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  async function openDetails(item){
+    const modal = document.getElementById("vipModal");
+    const body = document.getElementById("vipModalBody");
+    const title = document.getElementById("vipModalTitle");
+
+    title.textContent = item.title || "تفاصيل";
+    body.innerHTML = `<div class="match-loading"><i class="fa-solid fa-spinner fa-spin"></i> جاري جلب التفاصيل...</div>`;
+    modal.style.display = "flex";
+
+    try {
+      const detailData = await request(`${API_ENDPOINT}?action=posts&id=${item.id}`);
+      const info = detailData.post || detailData;
+      const isSeries = !!(item.series_slug || item.season_slug || info.series_slug || info.season_slug);
+
+      let contentHtml = `
+        <div class="vip-detail-layout">
+          <img src="${info.thumbnail || item.thumbnail}" class="vip-detail-poster" alt="" onerror="this.src='https://via.placeholder.com/300x450/121a2c/93a1ba?text=No+Image'">
+          <div class="vip-detail-story">
+            <h4 style="color:#fff;font-size:1.05rem;margin-bottom:6px">${info.title || item.title}</h4>
+            <p>${(info.meta && info.meta.story) ? info.meta.story : 'لا يوجد وصف متوفر.'}</p>
+          </div>
+        </div>
+      `;
+
+      if(!isSeries){
+        const realId = info.realid || item.realid || item.id;
+        contentHtml += `
+          <div class="vip-block-title"><i class="fa-solid fa-play" style="color:var(--vip)"></i> المشاهدة المباشرة</div>
+          <div class="vip-list-wrap">
+            <button class="vip-action-btn active" onclick="VipModule.playVipStream('${realId}', '${(info.title || item.title).replace(/'/g, "\\'")}')">
+              <i class="fa-solid fa-circle-play"></i> تشغيل الآن
+            </button>
+          </div>
+        `;
+
+        if(info.meta && info.meta.download_links_list && info.meta.download_links_list.length){
+          contentHtml += `
+            <div class="vip-block-title"><i class="fa-solid fa-download" style="color:var(--vip)"></i> روابط التحميل</div>
+            <div class="vip-list-wrap">
+              ${info.meta.download_links_list.map(d => `<a href="${d.url}" target="_blank" class="vip-action-btn"><i class="fa-solid fa-arrow-down"></i> ${d.quality || 'تحميل'}</a>`).join('')}
+            </div>
+          `;
+        }
+        body.innerHTML = contentHtml;
+      } else {
+        const seriesSlug = info.series_slug || item.series_slug;
+        body.innerHTML = contentHtml + `<div id="vipSeasonsContainer"><div class="match-loading"><i class="fa-solid fa-spinner fa-spin"></i> جاري جلب المواسم...</div></div>`;
+        loadSeriesSeasons(seriesSlug, info.season_slug || item.season_slug);
+      }
+
+    } catch(err){
+      body.innerHTML = `<div class="match-loading">تعذر تحميل تفاصيل العمل.</div>`;
+    }
+  }
+
+  async function loadSeriesSeasons(seriesSlug, currentSeasonSlug){
+    const container = document.getElementById("vipSeasonsContainer");
+    try {
+      let seasons = [];
+      if(seriesSlug){
+        const sData = await request(`${API_ENDPOINT}?action=seasons&series_slug=${seriesSlug}`);
+        seasons = Array.isArray(sData) ? sData : (sData.seasons || []);
+      }
+
+      if(!seasons.length && currentSeasonSlug){
+        seasons = [{ name: 'الموسم الحالي', slug: currentSeasonSlug }];
+      }
+
+      let html = `
+        <div class="vip-block-title"><i class="fa-solid fa-list-ol" style="color:var(--vip)"></i> المواسم</div>
+        <div class="vip-list-wrap" id="seasonsList">
+          ${seasons.map((s, idx) => `
+            <button class="vip-action-btn ${idx === 0 ? 'active' : ''}" onclick="VipModule.loadEpisodes('${s.slug}', this)">
+              ${s.name}
+            </button>
+          `).join('')}
+        </div>
+        <div class="vip-block-title"><i class="fa-solid fa-film" style="color:var(--vip)"></i> الحلقات</div>
+        <div class="vip-list-wrap" id="vipEpisodesList">
+          <div class="match-loading"><i class="fa-solid fa-spinner fa-spin"></i> جاري جلب الحلقات...</div>
+        </div>
+      `;
+      container.innerHTML = html;
+
+      if(seasons.length > 0){
+        loadEpisodes(seasons[0].slug);
+      }
+    } catch(e){
+      container.innerHTML = `<div class="match-loading">تعذر جلب المواسم والحلقات</div>`;
+    }
+  }
+
+  async function loadEpisodes(seasonSlug, btn = null){
+    if(btn){
+      document.querySelectorAll("#seasonsList .vip-action-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+    }
+
+    const epContainer = document.getElementById("vipEpisodesList");
+    epContainer.innerHTML = `<div class="match-loading"><i class="fa-solid fa-spinner fa-spin"></i> جاري جلب الحلقات...</div>`;
+
+    try {
+      const epData = await request(`${API_ENDPOINT}?action=posts&season_slug=${seasonSlug}&page=1&per_page=100`);
+      const episodes = epData.posts || (Array.isArray(epData) ? epData : []);
+
+      if(!episodes.length){
+        epContainer.innerHTML = `<div class="match-loading">لا توجد حلقات متوفرة</div>`;
+        return;
+      }
+
+      epContainer.innerHTML = episodes.map(ep => {
+        const epNum = (ep.meta && ep.meta.number) ? `الحلقة ${ep.meta.number}` : ep.title;
+        return `
+          <button class="vip-action-btn" onclick="VipModule.playVipStream('${ep.id}', '${epNum.replace(/'/g, "\\'")}')">
+            <i class="fa-solid fa-play"></i> ${epNum}
+          </button>
+        `;
+      }).join('');
+    } catch(e){
+      epContainer.innerHTML = `<div class="match-loading">تعذر تحميل الحلقات</div>`;
+    }
+  }
+
+  async function playVipStream(realId, title){
+    try {
+      const data = await request(`${API_ENDPOINT}?action=stream&realid=${realId}`);
+      const streamUrl = data.url || (data.data && data.data.url);
+
+      if(!streamUrl){
+        alert("رابط البث غير متوفر حالياً");
+        return;
+      }
+
+      Matches.playStream(streamUrl, title);
+    } catch(e){
+      alert("تعذر جلب رابط المشاهدة المباشر");
+    }
+  }
+
+  function closeModal(){
+    document.getElementById("vipModal").style.display = "none";
+  }
+
+  return {
+    init,
+    isInitialized,
+    fetchPosts,
+    search,
+    loadEpisodes,
+    playVipStream,
+    closeModal
+  };
+})();
+
+/* ===================== تشغيل التطبيق ===================== */
+document.addEventListener("DOMContentLoaded", () => {
+  Live.fetchCategories();
+  SpecialLive.init();
+  Matches.fetchMatches();
+});
 </script>
 </body>
 </html>
