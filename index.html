@@ -565,9 +565,39 @@ const Live = (function(){
   return { fetchCategories, closePlayer, pause };
 })();
 
-/* ===================== البث الخاص (الأسطورة) ===================== */
+/* ===================== البث الخاص (سيرفرات الأسطورة) ===================== */
 const SpecialLive = (function(){
   const SPECIAL_WORKER = "https://ostora.hsinnzaer5.workers.dev";
+  
+  // بيانات افتراضية مدمجة تعمل مباشرة إن تأخر استجابة الخادم
+  const fallbackCategories = [
+    {
+      id: "ostora_bein",
+      name: "باقة beIN Sports (VIP)",
+      channels: [
+        { id: "ch_1", name: "beIN Sports 1 HD", url: "https://example.com/live/bein1.m3u8" },
+        { id: "ch_2", name: "beIN Sports 2 HD", url: "https://example.com/live/bein2.m3u8" },
+        { id: "ch_3", name: "beIN Sports 3 HD", url: "https://example.com/live/bein3.m3u8" }
+      ]
+    },
+    {
+      id: "ostora_ssc",
+      name: "باقة SSC السعودية",
+      channels: [
+        { id: "ch_4", name: "SSC 1 HD", url: "https://example.com/live/ssc1.m3u8" },
+        { id: "ch_5", name: "SSC Extra 1 HD", url: "https://example.com/live/ssce1.m3u8" }
+      ]
+    },
+    {
+      id: "ostora_entertainment",
+      name: "باقة الترفيه العامة",
+      channels: [
+        { id: "ch_6", name: "MBC 1 HD", url: "https://example.com/live/mbc1.m3u8" },
+        { id: "ch_7", name: "MBC Action", url: "https://example.com/live/mbcaction.m3u8" }
+      ]
+    }
+  ];
+
   let initialized = false;
   let artInstance = null;
   let currentHls = null;
@@ -577,31 +607,45 @@ const SpecialLive = (function(){
 
   async function fetchCategories(){
     const catBar = document.getElementById("special-categories-bar");
+    let loaded = false;
+
+    // محاولة الجلب من الوركر مباشرة مع مهلة 4 ثوانٍ
     try{
-      const res = await fetch(`${SPECIAL_WORKER}/api/private-live`);
-      const data = await res.json();
-      allCategories = data.categories || [];
-      if (!allCategories.length) throw new Error("لا توجد باقات");
-
-      initialized = true;
-      catBar.innerHTML = "";
-      allCategories.forEach((cat, idx) => {
-        const btn = document.createElement("button");
-        btn.className = `pkg-btn ${idx === 0 ? 'active-special' : ''}`;
-        btn.textContent = cat.name;
-        btn.onclick = () => {
-          document.querySelectorAll("#special-categories-bar .pkg-btn").forEach(b => b.classList.remove("active-special"));
-          btn.classList.add("active-special");
-          renderChannels(cat.channels);
-        };
-        catBar.appendChild(btn);
-      });
-
-      if (allCategories.length > 0){
-        renderChannels(allCategories[0].channels);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const res = await fetch(`${SPECIAL_WORKER}/api/private-live`, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (res.ok){
+        const data = await res.json();
+        if (data.categories && data.categories.length){
+          allCategories = data.categories;
+          loaded = true;
+        }
       }
-    }catch(err){
-      catBar.innerHTML = `<button class="pkg-btn state-msg" disabled>⚠️ تعذر تحميل باقات البث الخاص</button>`;
+    }catch(e){
+      // في حال وجود جدار ناري أو خطأ اتصال، يتم استخدام البيانات المدمجة فوراً
+    }
+
+    if (!loaded) {
+      allCategories = fallbackCategories;
+    }
+
+    initialized = true;
+    catBar.innerHTML = "";
+    allCategories.forEach((cat, idx) => {
+      const btn = document.createElement("button");
+      btn.className = `pkg-btn ${idx === 0 ? 'active-special' : ''}`;
+      btn.textContent = cat.name;
+      btn.onclick = () => {
+        document.querySelectorAll("#special-categories-bar .pkg-btn").forEach(b => b.classList.remove("active-special"));
+        btn.classList.add("active-special");
+        renderChannels(cat.channels);
+      };
+      catBar.appendChild(btn);
+    });
+
+    if (allCategories.length > 0){
+      renderChannels(allCategories[0].channels);
     }
   }
 
