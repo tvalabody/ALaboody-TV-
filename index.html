@@ -161,7 +161,7 @@ img{max-width:100%;display:block}
 .section-count{font-size:.72rem;color:var(--muted);background:var(--surface-solid);border:1px solid var(--line);padding:5px 10px;border-radius:999px;white-space:nowrap}
 
 /* ============================================================
-   4) قسم البث المباشر (الأحداث والمباريات)
+   4) قسم البث المباشر (الباقات والقنوات)
    ============================================================ */
 .live-hero{padding:6px 2px 14px;text-align:center}
 .live-hero h1{font-family:'Cairo',sans-serif;font-size:1.45rem;font-weight:900}
@@ -183,23 +183,30 @@ img{max-width:100%;display:block}
 .live-player-bar h3{font-size:.92rem;font-weight:800;display:flex;align-items:center;gap:7px}
 #artplayer-app{width:100%;aspect-ratio:16/9;background:#000}
 .live-servers-bar{display:flex;gap:7px;flex-wrap:wrap;padding:10px 14px;background:var(--surface-solid);border-top:1px solid var(--line)}
-.live-srv-btn{background:var(--surface-2);border:1px solid var(--line);color:#fff;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer}
+.live-srv-btn{background:var(--surface-2);border:1px solid var(--line);color:#fff;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer}
 .live-srv-btn.active{background:linear-gradient(135deg,var(--live),var(--live-2));border-color:transparent}
 
-.events-list{display:flex;flex-direction:column;gap:12px}
-.event-card{
-  background:var(--surface-solid);border:1px solid var(--line);border-radius:16px;
-  padding:14px;cursor:pointer;transition:.25s ease;display:flex;flex-direction:column;gap:10px;
+.live-packages-bar{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 14px;scrollbar-width:none}
+.live-packages-bar::-webkit-scrollbar{display:none}
+.live-pkg-btn{
+  flex:0 0 auto;background:var(--surface-solid);border:1px solid var(--line);color:var(--muted);
+  padding:8px 18px;border-radius:999px;font-size:.82rem;font-weight:700;cursor:pointer;transition:.2s;
 }
-.event-card:hover,.event-card:active{border-color:var(--live);transform:translateY(-2px);box-shadow:0 8px 20px rgba(255,45,85,.15)}
-.event-top{display:flex;align-items:center;justify-content:space-between;font-size:.78rem;color:var(--muted)}
-.event-championship{font-weight:800;color:var(--text);display:flex;align-items:center;gap:6px}
-.event-time{background:var(--surface-2);padding:3px 8px;border-radius:8px;border:1px solid var(--line);font-weight:700}
-.event-teams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;text-align:center;padding:6px 0}
-.event-team{display:flex;flex-direction:column;align-items:center;gap:6px}
-.event-team img{width:42px;height:42px;object-fit:contain}
-.event-team span{font-size:.84rem;font-weight:800}
-.event-vs{font-size:.85rem;font-weight:900;color:var(--live);background:rgba(255,45,85,.1);padding:4px 10px;border-radius:10px;border:1px solid rgba(255,45,85,.25)}
+.live-pkg-btn.active{
+  background:linear-gradient(135deg,var(--live),var(--live-2));color:#fff;border-color:transparent;
+  box-shadow:0 6px 16px rgba(255,45,85,.35);
+}
+
+.live-channels-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:11px}
+.channel-card{
+  background:var(--surface-solid);border:1px solid var(--line);border-radius:14px;padding:16px 8px;
+  text-align:center;font-weight:800;font-size:.85rem;transition:.2s ease;cursor:pointer;position:relative;
+}
+.channel-card:active{transform:scale(.96)}
+.channel-card.active-stream{background:rgba(255,45,85,.15);border-color:var(--live)}
+.channel-card.active-stream::after{
+  content:"● مباشر";position:absolute;top:6px;left:6px;font-size:.6rem;color:var(--live);font-weight:900;
+}
 
 /* ============================================================
    5) إطارات التضمين المتجاوبة (مباريات، الترفيه)
@@ -449,34 +456,36 @@ body.cinema-mode{background:#000;overflow:hidden}
 <main id="app-live" class="app-view active">
   <div class="shell">
     <div class="live-hero">
-      <h1 class="brand-font">العُبودي TV — البث المباشر</h1>
-      <div class="subtitle">مباريات اليوم والأحداث المباشرة بأعلى جودة وسيرفرات متعددة</div>
+      <h1 class="brand-font">العُبودي TV</h1>
+      <div class="subtitle">بث مباشر لجميع الباقات والقنوات العالمية والعربية</div>
       <a href="https://t.me/stlaet1" class="telegram-link" target="_blank">
-        <i class="fa-brands fa-telegram"></i><span>قناتنا على التلكرام @stlaet1</span>
+        <i class="fa-brands fa-telegram"></i><span>تابعونا على التلكرام @stlaet1</span>
       </a>
     </div>
 
     <!-- مشغل البث المباشر -->
     <section id="livePlayerBox" class="live-player-box">
       <div class="live-player-bar">
-        <h3 id="liveChannelName"><span class="nav-live-pulse"></span> جاري التشغيل...</h3>
-        <button class="btn-cancel" style="padding:6px 14px;border-radius:10px;font-size:12px;" onclick="LiveModule.closePlayer()"><i class="fa-solid fa-xmark"></i> إغلاق المشغل</button>
+        <h3 id="liveChannelName"><span class="nav-live-pulse"></span> اسم القناة</h3>
+        <button class="btn-cancel" style="padding:6px 14px;border-radius:10px;font-size:12px;" onclick="LiveModule.closePlayer()"><i class="fa-solid fa-xmark"></i> إغلاق</button>
       </div>
       <div id="artplayer-app"></div>
       <div class="live-servers-bar" id="liveServersBar" style="display:none"></div>
     </section>
 
-    <!-- قائمة المباريات والأحداث المباشرة -->
+    <!-- شريط الباقات -->
+    <div class="live-packages-bar hscroll" id="categories-bar">
+      <button class="live-pkg-btn" disabled>جاري جلب الباقات...</button>
+    </div>
+
+    <!-- بطاقات القنوات -->
     <section class="glass-panel" style="padding:14px;margin-top:8px;">
       <div class="section-title">
-        <h2 id="livePageTitle"><i class="fa-solid fa-bolt" style="color:var(--live)"></i> مباريات وأحداث اليوم</h2>
+        <h2 id="livePageTitle"><i class="fa-solid fa-tv" style="color:var(--live)"></i> القنوات</h2>
         <span class="section-count" id="liveChannelsCount">—</span>
       </div>
-      <div id="liveErrorMsg" style="display:none;background:rgba(255,45,85,.1);border:1px solid rgba(255,45,85,.3);color:#ffb3c0;padding:12px;border-radius:12px;font-size:13px;margin-bottom:12px;"></div>
-      <div class="events-list" id="liveEventsList"></div>
-      <div id="liveLoading" style="display:none;text-align:center;padding:40px 0;color:var(--muted)">
-        <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem;color:var(--live);margin-bottom:8px"></i>
-        <div>جاري جلب الأحداث المباشرة...</div>
+      <div class="live-channels-grid" id="channels">
+        <div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px 10px;font-size:.9rem;"><i class="fa-solid fa-satellite-dish"></i> اختر باقة لعرض قنواتها</div>
       </div>
     </section>
   </div>
@@ -684,174 +693,133 @@ function switchMainTab(tab){
 }
 
 /* ============================================================
-   موديل البث المباشر المحدث بالكامل
+   موديل البث المباشر (الباقات والقنوات عبر الوركر)
    ============================================================ */
 const LiveModule = (function(){
-  const WORKER_PROXY = "https://yacine-proxy.hsinnzaer5.workers.dev";
-  const EVENTS_API = "https://def.yacinelive.com/api/events";
+  const PROXY_WORKER = "https://yacine-proxy.hsinnzaer5.workers.dev";
   let artInstance = null;
+  let currentHls = null;
 
   async function init(){
-    const loader = document.getElementById('liveLoading');
-    const list = document.getElementById('liveEventsList');
-    const countEl = document.getElementById('liveChannelsCount');
-    const errorDiv = document.getElementById('liveErrorMsg');
+    const catBar = document.getElementById("categories-bar");
+    try{
+      const res = await fetch(`${PROXY_WORKER}/api/categories`);
+      const data = await res.json();
+      const categories = Array.isArray(data) ? data : (data.categories || data.data || []);
+      if (!categories.length) throw new Error("لا توجد باقات");
 
-    if (loader) loader.style.display = 'block';
-    if (list) list.innerHTML = '';
-    if (errorDiv) errorDiv.style.display = 'none';
-
-    let data = null;
-
-    const tryUrls = [
-      `${WORKER_PROXY}/api/events`,
-      `${WORKER_PROXY}/?url=${encodeURIComponent(EVENTS_API)}`,
-      `${WORKER_PROXY}/proxy?url=${encodeURIComponent(EVENTS_API)}`,
-      `${EVENTS_API}`
-    ];
-
-    for (let url of tryUrls) {
-      try {
-        const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-        if (res.ok) {
-          const json = await res.json();
-          if (json) {
-            data = json;
-            break;
-          }
-        }
-      } catch (e) {}
-    }
-
-    if (loader) loader.style.display = 'none';
-
-    if (!data) {
-      if (errorDiv) {
-        errorDiv.innerHTML = `<strong>تنبيه:</strong> تعذر استلام بيانات المباريات من السيرفر حالياً.`;
-        errorDiv.style.display = 'block';
-      }
-      if (countEl) countEl.textContent = "—";
-      return;
-    }
-
-    const events = Array.isArray(data) ? data : (data.events || data.data || data.matches || []);
-
-    if (!events.length) {
-      if (errorDiv) {
-        errorDiv.innerText = "لا توجد مباريات جارية أو مجدولة في الوقت الحالي.";
-        errorDiv.style.display = 'block';
-      }
-      if (countEl) countEl.textContent = "0 حدث";
-      return;
-    }
-
-    if (countEl) countEl.textContent = `${events.length} حدث`;
-    renderEvents(events);
-  }
-
-  function renderEvents(events){
-    const list = document.getElementById('liveEventsList');
-    if (!list) return;
-    list.innerHTML = '';
-
-    events.forEach(ev => {
-      const card = document.createElement('div');
-      card.className = 'event-card';
-
-      const team1Name = ev.team_1_name || ev.home_team || ev.team1 || ev.title || 'فريق 1';
-      const team2Name = ev.team_2_name || ev.away_team || ev.team2 || '';
-      const team1Logo = ev.team_1_logo || ev.home_logo || ev.team1_logo || 'https://via.placeholder.com/60/121a2c/FFFFFF/?text=T1';
-      const team2Logo = ev.team_2_logo || ev.away_logo || ev.team2_logo || 'https://via.placeholder.com/60/121a2c/FFFFFF/?text=T2';
-      const championship = ev.championship_name || ev.league || ev.category || 'بث مباشر';
-      const matchTime = ev.time || ev.match_time || ev.status || 'مباشر';
-
-      card.innerHTML = `
-        <div class="event-top">
-          <span class="event-championship"><i class="fa-solid fa-trophy" style="color:var(--match)"></i> ${escapeHtml(championship)}</span>
-          <span class="event-time"><i class="fa-regular fa-clock"></i> ${escapeHtml(matchTime)}</span>
-        </div>
-        <div class="event-teams">
-          <div class="event-team">
-            <img src="${escapeAttr(team1Logo)}" alt="${escapeAttr(team1Name)}" loading="lazy" onerror="this.src='https://via.placeholder.com/60/121a2c/FFFFFF/?text=T1'">
-            <span>${escapeHtml(team1Name)}</span>
-          </div>
-          <div class="event-vs">VS</div>
-          <div class="event-team">
-            <img src="${escapeAttr(team2Logo)}" alt="${escapeAttr(team2Name)}" loading="lazy" onerror="this.src='https://via.placeholder.com/60/121a2c/FFFFFF/?text=T2'">
-            <span>${escapeHtml(team2Name || '—')}</span>
-          </div>
-        </div>
-      `;
-
-      card.onclick = () => openEventStream(ev);
-      list.appendChild(card);
-    });
-  }
-
-  function openEventStream(ev){
-    const playerBox = document.getElementById('livePlayerBox');
-    const titleEl = document.getElementById('liveChannelName');
-    const serversBar = document.getElementById('liveServersBar');
-
-    const title = `${ev.team_1_name || ev.home_team || ''} vs ${ev.team_2_name || ev.away_team || ev.title || 'بث مباشر'}`;
-    if (playerBox) playerBox.classList.add('active');
-    if (titleEl) titleEl.innerHTML = `<span class="nav-live-pulse"></span> ${escapeHtml(title)}`;
-    if (serversBar) {
-      serversBar.innerHTML = '';
-      serversBar.style.display = 'none';
-    }
-
-    playerBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-    let streams = [];
-    if (Array.isArray(ev.channels) && ev.channels.length > 0) {
-      ev.channels.forEach(ch => {
-        if (Array.isArray(ch.servers)) {
-          ch.servers.forEach(srv => {
-            streams.push({ name: `${ch.name || 'قناة'} - ${srv.name || 'سيرفر'}`, url: srv.url || srv.stream_url });
-          });
-        } else if (ch.url || ch.stream_url) {
-          streams.push({ name: ch.name || 'السيرفر الرئيسي', url: ch.url || ch.stream_url });
-        }
-      });
-    } else if (Array.isArray(ev.servers)) {
-      ev.servers.forEach((srv, idx) => {
-        streams.push({ name: srv.name || `سيرفر ${idx+1}`, url: srv.url || srv.stream_url });
-      });
-    } else if (ev.url || ev.stream_url) {
-      streams.push({ name: 'السيرفر المباشر', url: ev.url || ev.stream_url });
-    }
-
-    if (!streams.length || !streams[0].url) {
-      alert("البث غير متاح حالياً لهذه المباراة.");
-      return;
-    }
-
-    if (streams.length > 1 && serversBar) {
-      serversBar.style.display = 'flex';
-      streams.forEach((st, idx) => {
-        const btn = document.createElement('button');
-        btn.className = `live-srv-btn ${idx === 0 ? 'active' : ''}`;
-        btn.textContent = st.name;
+      catBar.innerHTML = "";
+      categories.forEach((cat) => {
+        const btn = document.createElement("button");
+        btn.className = "live-pkg-btn";
+        btn.textContent = cat.name || cat.title || `باقة ${cat.id}`;
         btn.onclick = () => {
-          document.querySelectorAll('.live-srv-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          startArtPlayer(st.url);
+          document.querySelectorAll(".live-pkg-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          fetchChannels(cat.id);
         };
-        serversBar.appendChild(btn);
+        catBar.appendChild(btn);
       });
-    }
 
-    startArtPlayer(streams[0].url);
+      if (categories.length > 0){
+        catBar.children[0].classList.add("active");
+        fetchChannels(categories[0].id);
+      }
+    }catch(err){
+      catBar.innerHTML = `<button class="live-pkg-btn" disabled>⚠️ تعذر تحميل الباقات</button>`;
+    }
+  }
+
+  async function fetchChannels(categoryId){
+    const grid = document.getElementById("channels");
+    const count = document.getElementById("liveChannelsCount");
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px 10px;font-size:.9rem"><i class="fa-solid fa-spinner fa-spin"></i> جاري جلب القنوات...</div>`;
+
+    try{
+      const res = await fetch(`${PROXY_WORKER}/api/categories/${categoryId}/channels`);
+      const data = await res.json();
+      const channels = Array.isArray(data) ? data : (data.channels || data.data || []);
+      if (!channels.length){
+        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px 10px;font-size:.9rem">لا توجد قنوات متاحة في هذه الباقة</div>`;
+        count.textContent = "0 قناة";
+        return;
+      }
+
+      count.textContent = `${channels.length} قناة`;
+      grid.innerHTML = "";
+      channels.forEach(ch => {
+        const card = document.createElement("div");
+        card.className = "channel-card";
+        card.textContent = ch.name || ch.title;
+        card.onclick = () => {
+          document.querySelectorAll(".channel-card").forEach(c => c.classList.remove("active-stream"));
+          card.classList.add("active-stream");
+          loadChannel(ch.id, ch.name || ch.title);
+        };
+        grid.appendChild(card);
+      });
+    }catch(err){
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px 10px;font-size:.9rem">تعذر تحميل القنوات</div>`;
+      count.textContent = "—";
+    }
+  }
+
+  async function loadChannel(channelId, channelName){
+    const container = document.getElementById("livePlayerBox");
+    const title = document.getElementById("liveChannelName");
+    const serversDiv = document.getElementById("liveServersBar");
+
+    container.classList.add("active");
+    title.innerHTML = `<span class="nav-live-pulse"></span> جاري تجهيز: ${escapeHtml(channelName)}...`;
+    serversDiv.innerHTML = "";
+    serversDiv.style.display = "none";
+    container.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    try{
+      const res = await fetch(`${PROXY_WORKER}/api/channel/${channelId}`);
+      const data = await res.json();
+
+      let streamList = [];
+      if (Array.isArray(data)) streamList = data;
+      else if (data.data && Array.isArray(data.data)) streamList = data.data;
+      else if (data.url || data.stream_url) streamList = [{ name: "السيرفر الرئيسي", url: data.url || data.stream_url }];
+
+      if (!streamList.length) throw new Error("السيرفرات غير متوفرة حالياً");
+
+      title.innerHTML = `<span class="nav-live-pulse"></span> ${escapeHtml(channelName)}`;
+      let defaultIndex = 0;
+
+      if (streamList.length > 1) {
+        serversDiv.style.display = "flex";
+        streamList.forEach((st, idx) => {
+          const targetUrl = st.url || st.stream_url;
+          if (!targetUrl) return;
+          const btn = document.createElement("button");
+          btn.className = `live-srv-btn ${idx === defaultIndex ? 'active' : ''}`;
+          btn.textContent = st.name || st.quality || `سيرفر ${idx + 1}`;
+          btn.onclick = () => {
+            document.querySelectorAll(".live-srv-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            startArtPlayer(targetUrl);
+          };
+          serversDiv.appendChild(btn);
+        });
+      }
+
+      const firstUrl = streamList[defaultIndex].url || streamList[defaultIndex].stream_url;
+      if (firstUrl) startArtPlayer(firstUrl);
+    }catch(err){
+      title.textContent = `خطأ في تشغيل القناة`;
+    }
   }
 
   function startArtPlayer(rawUrl){
-    destroyPlayer();
-    const proxiedStream = `${WORKER_PROXY}?stream=${encodeURIComponent(rawUrl)}`;
+    const proxiedStreamUrl = `${PROXY_WORKER}?stream=${encodeURIComponent(rawUrl)}`;
+    closePlayer(true);
 
     artInstance = new Artplayer({
       container: '#artplayer-app',
-      url: proxiedStream,
+      url: proxiedStreamUrl,
       type: 'm3u8',
       theme: '#ff2d55',
       volume: 1,
@@ -865,16 +833,14 @@ const LiveModule = (function(){
       lang: 'ar',
       moreVideoAttr: { crossOrigin: 'anonymous' },
       customType: {
-        m3u8: function (video, url) {
-          if (Hls.isSupported()) {
+        m3u8: function (video, url){
+          if (Hls.isSupported()){
             const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
             hls.loadSource(url);
             hls.attachMedia(video);
+            currentHls = hls;
             artInstance.hls = hls;
-            hls.on(Hls.Events.ERROR, function (event, data) {
-              if (data.fatal) video.src = rawUrl;
-            });
-          } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+          } else if (video.canPlayType('application/vnd.apple.mpegurl')){
             video.src = url;
           }
         },
@@ -882,30 +848,24 @@ const LiveModule = (function(){
     });
   }
 
-  function destroyPlayer(){
-    if (artInstance) {
-      if (artInstance.hls) artInstance.hls.destroy();
-      artInstance.destroy(false);
-      artInstance = null;
+  function closePlayer(keepDom){
+    if (currentHls){ currentHls.stopLoad(); currentHls.detachMedia(); currentHls.destroy(); currentHls = null; }
+    if (artInstance){ artInstance.destroy(true); artInstance = null; }
+    if (!keepDom){
+      document.getElementById("livePlayerBox").classList.remove("active");
+      document.querySelectorAll(".channel-card").forEach(c => c.classList.remove("active-stream"));
     }
   }
 
-  function closePlayer(){
-    destroyPlayer();
-    const playerBox = document.getElementById('livePlayerBox');
-    if (playerBox) playerBox.classList.remove('active');
-  }
-
   function pause(){
-    try { if (artInstance && artInstance.video) artInstance.video.pause(); } catch(e){}
+    try{ if (artInstance && artInstance.video) artInstance.video.pause(); }catch(e){}
   }
 
   function escapeHtml(value){
     return String(value).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
   }
-  function escapeAttr(value){ return escapeHtml(value); }
 
-  return { init, closePlayer, pause, destroyPlayer };
+  return { init, closePlayer, pause };
 })();
 
 /* ============================================================
