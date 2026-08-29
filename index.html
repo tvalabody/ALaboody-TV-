@@ -445,7 +445,7 @@ body.cinema-mode{background:#000;overflow:hidden}
   <button data-tab="ent" onclick="switchMainTab('ent')"><i class="fa-solid fa-clapperboard"></i>الترفيه</button>
 </nav>
 
-<!-- 1) البث المباشر (بروكسي وركر Cloudflare) -->
+<!-- 1) البث المباشر -->
 <main id="app-live" class="app-view active">
   <div class="shell">
     <div class="live-hero">
@@ -684,7 +684,7 @@ function switchMainTab(tab){
 }
 
 /* ============================================================
-   موديل البث المباشر (يعتمد على وركر yacine-proxy)
+   موديل البث المباشر المحدث بالكامل
    ============================================================ */
 const LiveModule = (function(){
   const WORKER_PROXY = "https://yacine-proxy.hsinnzaer5.workers.dev";
@@ -703,42 +703,42 @@ const LiveModule = (function(){
 
     let data = null;
 
-    // محاولة جلب الأحداث عبر وركر Cloudflare
-    const endpointsToTry = [
+    const tryUrls = [
       `${WORKER_PROXY}/api/events`,
-      `${WORKER_PROXY}?url=${encodeURIComponent(EVENTS_API)}`,
-      `${WORKER_PROXY}/proxy?url=${encodeURIComponent(EVENTS_API)}`
+      `${WORKER_PROXY}/?url=${encodeURIComponent(EVENTS_API)}`,
+      `${WORKER_PROXY}/proxy?url=${encodeURIComponent(EVENTS_API)}`,
+      `${EVENTS_API}`
     ];
 
-    for (let ep of endpointsToTry) {
+    for (let url of tryUrls) {
       try {
-        const res = await fetch(ep);
+        const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
         if (res.ok) {
           const json = await res.json();
-          if (json && (Array.isArray(json) || json.events || json.data)) {
+          if (json) {
             data = json;
             break;
           }
         }
-      } catch(e) {}
+      } catch (e) {}
     }
 
+    if (loader) loader.style.display = 'none';
+
     if (!data) {
-      if (loader) loader.style.display = 'none';
       if (errorDiv) {
-        errorDiv.innerHTML = `<strong>خطأ:</strong> تعذر الاتصال ببروكسي الوركر أو لا توجد أحداث حالياً.`;
+        errorDiv.innerHTML = `<strong>تنبيه:</strong> تعذر استلام بيانات المباريات من السيرفر حالياً.`;
         errorDiv.style.display = 'block';
       }
       if (countEl) countEl.textContent = "—";
       return;
     }
 
-    const events = Array.isArray(data) ? data : (data.events || data.data || []);
-    if (loader) loader.style.display = 'none';
+    const events = Array.isArray(data) ? data : (data.events || data.data || data.matches || []);
 
     if (!events.length) {
       if (errorDiv) {
-        errorDiv.innerText = "لا توجد مباريات أو أحداث مباشرة حالياً.";
+        errorDiv.innerText = "لا توجد مباريات جارية أو مجدولة في الوقت الحالي.";
         errorDiv.style.display = 'block';
       }
       if (countEl) countEl.textContent = "0 حدث";
@@ -758,12 +758,12 @@ const LiveModule = (function(){
       const card = document.createElement('div');
       card.className = 'event-card';
 
-      const team1Name = ev.team_1_name || ev.home_team || ev.title || 'فريق 1';
-      const team2Name = ev.team_2_name || ev.away_team || '';
-      const team1Logo = ev.team_1_logo || ev.home_logo || 'https://via.placeholder.com/60/121a2c/FFFFFF/?text=T1';
-      const team2Logo = ev.team_2_logo || ev.away_logo || 'https://via.placeholder.com/60/121a2c/FFFFFF/?text=T2';
-      const championship = ev.championship_name || ev.league || 'بث مباشر';
-      const matchTime = ev.time || ev.status || 'مباشر';
+      const team1Name = ev.team_1_name || ev.home_team || ev.team1 || ev.title || 'فريق 1';
+      const team2Name = ev.team_2_name || ev.away_team || ev.team2 || '';
+      const team1Logo = ev.team_1_logo || ev.home_logo || ev.team1_logo || 'https://via.placeholder.com/60/121a2c/FFFFFF/?text=T1';
+      const team2Logo = ev.team_2_logo || ev.away_logo || ev.team2_logo || 'https://via.placeholder.com/60/121a2c/FFFFFF/?text=T2';
+      const championship = ev.championship_name || ev.league || ev.category || 'بث مباشر';
+      const matchTime = ev.time || ev.match_time || ev.status || 'مباشر';
 
       card.innerHTML = `
         <div class="event-top">
@@ -793,7 +793,7 @@ const LiveModule = (function(){
     const titleEl = document.getElementById('liveChannelName');
     const serversBar = document.getElementById('liveServersBar');
 
-    const title = `${ev.team_1_name || ''} vs ${ev.team_2_name || ev.title || 'بث مباشر'}`;
+    const title = `${ev.team_1_name || ev.home_team || ''} vs ${ev.team_2_name || ev.away_team || ev.title || 'بث مباشر'}`;
     if (playerBox) playerBox.classList.add('active');
     if (titleEl) titleEl.innerHTML = `<span class="nav-live-pulse"></span> ${escapeHtml(title)}`;
     if (serversBar) {
@@ -823,7 +823,7 @@ const LiveModule = (function(){
     }
 
     if (!streams.length || !streams[0].url) {
-      alert("البث غير متوفر حالياً لهذه المباراة.");
+      alert("البث غير متاح حالياً لهذه المباراة.");
       return;
     }
 
@@ -847,7 +847,6 @@ const LiveModule = (function(){
 
   function startArtPlayer(rawUrl){
     destroyPlayer();
-    // تمرير البث عبر الوركر
     const proxiedStream = `${WORKER_PROXY}?stream=${encodeURIComponent(rawUrl)}`;
 
     artInstance = new Artplayer({
@@ -873,10 +872,7 @@ const LiveModule = (function(){
             hls.attachMedia(video);
             artInstance.hls = hls;
             hls.on(Hls.Events.ERROR, function (event, data) {
-              if (data.fatal) {
-                // Fallback مباشر إذا تعذر البروكسي
-                video.src = rawUrl;
-              }
+              if (data.fatal) video.src = rawUrl;
             });
           } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
             video.src = url;
@@ -1225,7 +1221,7 @@ const VipModule = (function(){
     if(autoFullscreen) enterCinemaFullscreen();
 
     if(data.is_iframe){
-      container.innerHTML=`<iframe src="${escapeAttr(data.media_src)}" allow="autoplay; fullscreen; picture-item-picture" allowfullscreen></iframe>`;
+      container.innerHTML=`<iframe src="${escapeAttr(data.media_src)}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
     }else{
       container.innerHTML='<video id="vipPlyrPlayer" playsinline controls></video>';
       const video=document.getElementById('vipPlyrPlayer');
